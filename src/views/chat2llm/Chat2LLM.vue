@@ -8,9 +8,13 @@
         </div>
       </div>
     </div>
-    <div class="input">
-      <input type="text" :placeholder="replying ? '响应中..' : '输入对话内容'" v-model="param.query"
-             @keyup.enter="ask" :disabled="replying">
+    <div class="input-box">
+
+      <el-input class="input" type="textarea" :placeholder="replying ? '响应中..' : '输入对话内容..'"
+                v-model="param.query" :disabled="replying"
+                :autosize="{ maxRows: 5 }">
+      </el-input>
+      <el-button round type="info" @click="ask" :disabled="replying || !param.query">发送</el-button>
     </div>
   </div>
 </template>
@@ -22,13 +26,16 @@ import {ChatMessage, ChatRecord, RequestParam, Who} from "./model";
 import {fetchStream} from "./fetchStream";
 import markdown from "./markdown";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
-
+import {isEmpty} from "lodash";
 const param = ref(new RequestParam());
 const records = ref([] as ChatRecord[]);
 const replying = ref(false);
 
 function ask() {
   const {query} = param.value;
+  if (isEmpty(query)) {
+    return;
+  }
   addQuestion(new ChatMessage(uuidv4(), query));
   fetchAndParse(query);
 }
@@ -86,7 +93,7 @@ function addError(err: Error) {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .main {
   height: 100%;
   display: flex;
@@ -161,18 +168,29 @@ function addError(err: Error) {
 
   }
 
-  & > .input {
-    padding: 0.3rem 1rem;
-    height: 3rem;
-    background-color: #fff;
+  & > .input-box {
     display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.3rem 1rem;
+    background-color: #fff;
 
-    input {
-      width: 100%;
-      box-sizing: border-box;
-      border: none;
-      outline: none;
+    .input {
+      flex: 1;
       font-size: 1.2rem;
+      border-radius: 2rem;
+      border: 1px solid #939393;
+      padding: 0 1rem;
+
+      :deep(.el-textarea__inner) {
+        box-shadow: none;
+        background: transparent;
+        resize: none;
+      }
+      :deep(.el-textarea__inner::-webkit-scrollbar) {
+        width: 0;
+        height: 0;
+      }
     }
   }
 }

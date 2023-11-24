@@ -1,7 +1,7 @@
-@import 'src/assets/base';
+@use 'src/assets/base' as *;
+@use 'src/assets/element/index' as *;
 
 #app, main {
-  /*max-width: 1280px;*/
   font-weight: normal;
   height: 100vh;
 }
