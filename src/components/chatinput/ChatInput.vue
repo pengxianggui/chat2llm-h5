@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, watch, toRef, ref} from "vue";
+import {onMounted, toRef, ref} from "vue";
 
 const props = defineProps({
   modelValue: String,
