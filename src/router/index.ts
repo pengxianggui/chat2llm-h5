@@ -1,5 +1,5 @@
 import {createRouter, createWebHistory} from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
+import HomeView from '@/views/home/HomeView.vue'
 import Layout from "@/views/Layout.vue";
 import Chat2LLM from "@/views/chat2llm/Chat2LLM.vue";
 
@@ -10,16 +10,26 @@ const router = createRouter({
       path: '/',
       name: 'index',
       component: Layout,
-      redirect: 'chat',
+      redirect: 'home',
       children: [
         {
           path: 'home',
           name: 'home',
-          component: HomeView
+          component: HomeView,
+          meta: {
+            title: '首页',
+            showBack: false,
+            showSetting: true
+          }
         }, {
-          path: 'chat',
+          path: 'chat/:sessionId',
           name: 'chat',
-          component: Chat2LLM
+          component: Chat2LLM,
+          meta: {
+            title: '对话',
+            showBack: true,
+            showSetting: true
+          }
         }
       ]
     }

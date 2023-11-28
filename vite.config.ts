@@ -21,7 +21,7 @@ export default defineConfig({
     })
   ],
   server: {
-    host: '127.0.0.1',
+    host: '0.0.0.0',
     port: 8080,
     open: true,
     // 部署后记得ng配置此代理

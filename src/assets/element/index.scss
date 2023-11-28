@@ -2,3 +2,9 @@
   // 在这里覆盖element-plus的变量，从而实现主题样式自定义。
   $colors: ()
 );
+
+.session-drawer {
+  .el-drawer__header {
+    margin: 0 !important;
+  }
+}

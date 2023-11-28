@@ -1,5 +1,7 @@
+import markdown from "@/views/chat2llm/markdown";
+
 export enum Who {
-  you= 'you', robot = 'robot'
+  you = 'you', robot = 'robot'
 }
 
 export class RequestParam {
@@ -37,5 +39,56 @@ export class ChatRecord {
     this.avatar = avatar;
     this.messages = messages;
     this.chat_history_id = chat_history_id;
+  }
+}
+
+export class ChatSession {
+  sessionId: string;
+  sessionName: string;
+  records: Array<ChatRecord> = [];
+
+  constructor(sessionId: string) {
+    this.sessionId = sessionId;
+    this.sessionName = sessionId;
+  }
+
+  addQuestion(message: ChatMessage) {
+    const {chat_history_id} = message;
+    const record = new ChatRecord(Who.you, '👥', [message], chat_history_id);
+    record.renderHtml = message.text;
+    this.add(record);
+  }
+
+  addAnswer(message: ChatMessage) {
+    const {chat_history_id} = message;
+    let r = this.records.find(r => r.chat_history_id === chat_history_id);
+    if (r) {
+      r.messages.push(message);
+    } else {
+      r = new ChatRecord(Who.robot, '🤖', [message], chat_history_id);
+      this.add(r);
+    }
+    const messageText = r.messages.map(msg => msg.text).join("");
+    r.renderHtml = markdown.render(messageText);
+  }
+
+  addError(err: Error) {
+    // @ts-ignore
+    const r = this.records.findLast(r => r.who === Who.robot);
+    r.messages.length = 0; // clear
+    r.renderHtml = err.message
+  }
+
+  add(record: ChatRecord) {
+    if (this.records.length === 0) {
+      // 初始化sessionName
+      const {renderHtml} = record;
+      this.sessionName = renderHtml.substring(0, 30); // 截取前7位作为sessionName
+    }
+    this.records.push(record);
+  }
+
+  isEmpty() {
+    return this.records.length === 0;
   }
 }

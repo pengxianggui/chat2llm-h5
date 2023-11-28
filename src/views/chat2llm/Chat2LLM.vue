@@ -1,42 +1,47 @@
 <template>
-  <div class="main">
-    <div class="history">
-      <div v-for="(r) in records" :key="r.chat_history_id" class="record" :class="r.who">
+  <div class="body">
+    <div class="records">
+      <div v-for="(r) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
         <span class="avatar">{{ r.avatar }}</span>
         <div class="message">
           <div v-html="r.renderHtml" class="text"></div>
         </div>
       </div>
     </div>
-    <div class="input-box">
 
-      <el-input class="input" type="textarea" :placeholder="replying ? '响应中..' : '输入对话内容..'"
-                v-model="param.query" :disabled="replying"
-                :autosize="{ maxRows: 5 }">
-      </el-input>
-      <el-button round type="info" @click="ask" :disabled="replying || !param.query">发送</el-button>
-    </div>
+    <ChatInput v-model="param.query" :disabled="replying" :autofocus="true"
+               :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask"></ChatInput>
   </div>
 </template>
 
 <script lang="ts" setup>
-import {ref} from "vue";
+import {onBeforeUnmount, Ref, ref} from "vue";
 import {v4 as uuidv4} from 'uuid'; // 如果使用ES6模块
-import {ChatMessage, ChatRecord, RequestParam, Who} from "./model";
+import {ChatMessage, ChatSession, RequestParam} from "./model";
 import {fetchStream} from "./fetchStream";
-import markdown from "./markdown";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
 import {isEmpty} from "lodash";
-const param = ref(new RequestParam());
-const records = ref([] as ChatRecord[]);
+import ChatInput from "@/components/chatinput/ChatInput.vue";
+import {INPUT_TIP, REPLAYING} from "@/constant";
+import {useChatRecords} from "@/stores/chatRecords";
+import {useRoute} from "vue-router";
+
+const param = ref(new RequestParam()); // TODO 一些参数要从配置里取
 const replying = ref(false);
+const store = useChatRecords()
+
+// 从pinia中获取records
+const route = useRoute();
+const {params: {sessionId}} = route;
+const session:Ref<ChatSession> = ref(store.get(sessionId));
 
 function ask() {
   const {query} = param.value;
   if (isEmpty(query)) {
     return;
   }
-  addQuestion(new ChatMessage(uuidv4(), query));
+  session.value.addQuestion(new ChatMessage(uuidv4(), query));
+  clearQuery();
   fetchAndParse(query);
 }
 
@@ -50,62 +55,41 @@ function fetchAndParse(query: string) {
       replying.value = true;
     },
     onmessage: function (msgs: ChatMessage[]) {
-      msgs.forEach(msg => addAnswer(msg));
+      msgs.forEach(msg => session.value.addAnswer(msg));
     },
     ondone: function () {
       replying.value = false;
+      store.put(session.value);
     },
     onerr: function (err) {
       replying.value = false;
-      addError(err)
+      session.value.addError(err)
     }
   })
 }
 
-// 添加提问记录
-function addQuestion(message: ChatMessage) {
-  const {chat_history_id} = message;
-  const record = new ChatRecord(Who.you, '👥', [message], chat_history_id);
-  record.renderHtml = message.text;
-  records.value.push(record);
+// 清除输入项
+function clearQuery() {
   param.value.query = '';
 }
 
-// 添加回答记录
-function addAnswer(message: ChatMessage) {
-  const {chat_history_id} = message;
-  let r = records.value.find(r => r.chat_history_id === chat_history_id);
-  if (r) {
-    r.messages.push(message);
-  } else {
-    r = new ChatRecord(Who.robot, '🤖', [message], chat_history_id);
-    records.value.push(r);
+onBeforeUnmount(() => {
+  if (!session.value.isEmpty()) {
+    // TODO 持久化到API接口
   }
-  const messageText = r.messages.map(msg => msg.text).join("");
-  r.renderHtml = markdown.render(messageText);
-}
-
-// 发生错误时清空消息，并将错误信息提示出来
-function addError(err: Error) {
-  const r = records.value.findLast(r => r.who === Who.robot);
-  r.messages.length = 0; // clear
-  r.renderHtml = err.message
-}
+});
 </script>
 
 <style scoped lang="scss">
-.main {
+.body {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: #f8f8f8;
 
-  & > .history {
+  & > .records {
     flex: 1;
     overflow: hidden auto;
-    height: calc(100% - 160px);
-    background-color: #f6f6f6;
 
     $avatarSide: 2rem;
 
@@ -113,11 +97,11 @@ function addError(err: Error) {
       display: flex;
       align-items: flex-start;
       overflow: hidden;
+      padding: 0.6rem;
 
       .avatar {
         display: inline-block;
         text-align: center;
-        border-radius: 5px;
         width: $avatarSide;
         height: $avatarSide;
       }
@@ -128,19 +112,18 @@ function addError(err: Error) {
 
         & > .text {
           max-width: 100%;
-          border-radius: 10px;
-          padding: 15px;
+          border-radius: 0.6rem;
+          padding: 0.5rem;
         }
       }
     }
 
     .you {
       flex-direction: row-reverse;
-      padding: 10px;
 
       .message {
         margin-left: $avatarSide;
-        margin-right: 5px;
+        margin-right: 0.2rem;
         text-align: right;
 
         & > .text {
@@ -153,10 +136,9 @@ function addError(err: Error) {
 
     .robot {
       text-align: left;
-      padding: 10px;
 
       .message {
-        margin-left: 5px;
+        margin-left: 0.2rem;
         margin-right: $avatarSide;
 
         & > .text {
@@ -166,32 +148,6 @@ function addError(err: Error) {
       }
     }
 
-  }
-
-  & > .input-box {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    padding: 0.3rem 1rem;
-    background-color: #fff;
-
-    .input {
-      flex: 1;
-      font-size: 1.2rem;
-      border-radius: 2rem;
-      border: 1px solid #939393;
-      padding: 0 1rem;
-
-      :deep(.el-textarea__inner) {
-        box-shadow: none;
-        background: transparent;
-        resize: none;
-      }
-      :deep(.el-textarea__inner::-webkit-scrollbar) {
-        width: 0;
-        height: 0;
-      }
-    }
   }
 }
 </style>

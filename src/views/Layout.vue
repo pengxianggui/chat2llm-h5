@@ -1,21 +1,36 @@
 <template>
   <main>
-    <header>
-      <!-- 设置、标题、会话列表 -->
-    </header>
-
-    <RouterView/>
-
-    <footer>
-      <!-- 对话输入框，支持语音输入 -->
-    </footer>
+    <Header class="header"></Header>
+    <RouterView class="body"/>
+    <Footer class="footer"></Footer>
   </main>
 </template>
 
 <script setup>
-// TODO
+import Header from "@/views/Header.vue";
+import Footer from "@/views/Footer.vue";
+
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+main {
+  display: flex;
+  flex-direction: column;
+  position: relative;
 
+  .header {
+    height: 3rem;
+    box-shadow: 0 0 6PX rgba(0, 0, 0, 0.1);
+    z-index: 1;
+  }
+
+  .body {
+    flex: 1;
+    background-color: #f9f9f9;
+  }
+
+  .footer {
+
+  }
+}
 </style>
