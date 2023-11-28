@@ -10,33 +10,48 @@
     </div>
 
     <ChatInput v-model="param.query" :disabled="replying" :autofocus="true"
-               :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask"></ChatInput>
+      :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask"></ChatInput>
   </div>
 </template>
 
 <script lang="ts" setup>
-import {onBeforeUnmount, Ref, ref} from "vue";
-import {v4 as uuidv4} from 'uuid'; // 如果使用ES6模块
-import {ChatMessage, ChatSession, RequestParam} from "./model";
-import {fetchStream} from "./fetchStream";
+import { onBeforeUnmount, ref } from "vue";
+// @ts-ignore
+import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
+import { ChatMessage, ChatMode, ChatSession, RequestParam } from "./model";
+import { fetchStream } from "./fetchStream";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
-import {isEmpty} from "lodash";
+import { isEmpty } from "lodash";
 import ChatInput from "@/components/chatinput/ChatInput.vue";
-import {INPUT_TIP, REPLAYING} from "@/constant";
-import {useChatRecords} from "@/stores/chatRecords";
-import {useRoute} from "vue-router";
+import { INPUT_TIP, REPLAYING } from "@/constant";
+import { useChatSessions } from "@/stores/chatSessions";
+import { useChatParams } from '@/stores/chatParams';
 
-const param = ref(new RequestParam()); // TODO 一些参数要从配置里取
+const props = defineProps({
+  sessionId: {
+    type: String,
+    require: true
+  },
+  chatMode: ChatMode,
+  knowledgeName: String
+})
+
+const param = ref(new RequestParam(props.chatMode, '', props.knowledgeName)); // TODO 一些参数要从配置里取
 const replying = ref(false);
-const store = useChatRecords()
 
-// 从pinia中获取records
-const route = useRoute();
-const {params: {sessionId}} = route;
-const session:Ref<ChatSession> = ref(store.get(sessionId));
+const sessionStore = useChatSessions();
+// @ts-ignore
+const session: Ref<ChatSession> = sessionStore.get(props.sessionId); // 从pinia中获取session
 
+// 将当前聊天参数设置到store中
+const chatParamStore = useChatParams();
+chatParamStore.set(param.value);
+
+/**
+ * 发起提问
+ */
 function ask() {
-  const {query} = param.value;
+  const { query } = param.value;
   if (isEmpty(query)) {
     return;
   }
@@ -46,7 +61,7 @@ function ask() {
 }
 
 // 发起调用并解析
-function fetchAndParse(query: string) {
+function fetchAndParse(query?: string) {
   fetchStream({
     ...param.value,
     query
@@ -59,7 +74,7 @@ function fetchAndParse(query: string) {
     },
     ondone: function () {
       replying.value = false;
-      store.put(session.value);
+      sessionStore.put(session.value);
     },
     onerr: function (err) {
       replying.value = false;
@@ -87,13 +102,13 @@ onBeforeUnmount(() => {
   flex-direction: column;
   overflow: hidden;
 
-  & > .records {
+  &>.records {
     flex: 1;
     overflow: hidden auto;
 
     $avatarSide: 2rem;
 
-    & > .record {
+    &>.record {
       display: flex;
       align-items: flex-start;
       overflow: hidden;
@@ -110,7 +125,7 @@ onBeforeUnmount(() => {
         flex: 1;
         width: 0;
 
-        & > .text {
+        &>.text {
           max-width: 100%;
           border-radius: 0.6rem;
           padding: 0.5rem;
@@ -126,7 +141,7 @@ onBeforeUnmount(() => {
         margin-right: 0.2rem;
         text-align: right;
 
-        & > .text {
+        &>.text {
           display: inline-block;
           background-color: #94ea69;
           text-align: left;
@@ -141,7 +156,7 @@ onBeforeUnmount(() => {
         margin-left: 0.2rem;
         margin-right: $avatarSide;
 
-        & > .text {
+        &>.text {
           display: inline-block;
           background-color: #ffffff;
         }

@@ -1,9 +1,11 @@
+// @ts-ignore
 import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
+// @ts-ignore
 import markdownStyle from "markdown-it-style";
 
 const markdownit = new MarkdownIt({
-  highlight: function (str, lang) {
+  highlight: function (str: string, lang: string) {
     if (lang && hljs.getLanguage(lang)) {
       // console.log(hljs.getLanguage(lang))
       try {
@@ -11,6 +13,9 @@ const markdownit = new MarkdownIt({
           hljs.highlight(str, {language: lang}).value
           + '</code></pre>';
       } catch (__) {
+        return '<pre><code class="hljs">' +
+          str
+          + '</code></pre>';
       }
     }
     return str; // use external default escaping

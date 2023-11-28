@@ -7,7 +7,7 @@ interface FetchStreamOption {
   onopen?: (res: Response) => void;
   onmessage: (msgs: ChatMessage[]) => void;
   ondone: () => void;
-  onerr?: (err: Error) => void;
+  onerr?: (err: any) => void;
 }
 
 /**
@@ -26,6 +26,7 @@ export async function fetchStream(param: RequestParam, {
 
   async function create() {
     try {
+      // TODO 根据param.mode不同，给不同的path路径
       const response = await fetch(`/api/chat/chat`, {
         method: 'POST',
         headers: {
@@ -51,6 +52,6 @@ function defaultOnOpen(response: Response) {
   }
 }
 
-function defaultOnErr(err: Error) {
+function defaultOnErr(err: any) {
   console.log(err)
 }

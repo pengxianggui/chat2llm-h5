@@ -4,10 +4,15 @@ export enum Who {
   you = 'you', robot = 'robot'
 }
 
+export enum ChatMode {
+  LLM, Knowledge
+}
+
 export class RequestParam {
-  query: string = ''; // 请求的正文
-  history: [];  // 历史对话
-  model_name: string = 'zhipu-api'; // 模型名称
+  mode?: ChatMode = ChatMode.LLM; // 默认为llm模式
+  query?: string = ''; // 请求的正文
+  history?: [];  // 历史对话
+  model_name?: string = 'zhipu-api'; // 模型名称, TODO 前端不可调整，改为PC端可配, 需要改python server
   stream: boolean = true; // 是否流式输出
   temperature: number = 0.7; // 温度
   max_tokens: number = 10; // 最大token
@@ -15,13 +20,19 @@ export class RequestParam {
   knowledge_base_name ?: string; // 知识库名
   top_k ?: number = 3;
   score_threshold ?: number = 1;
+
+  constructor(mode?:ChatMode, query?:string, knowledge_base_name?:string) {
+    this.mode = mode;
+    this.query = query;
+    this.knowledge_base_name = knowledge_base_name;
+  }
 }
 
 export class ChatMessage {
   chat_history_id: string;
-  text: string;
+  text?: string;
 
-  constructor(chat_history_id: string, text: string) {
+  constructor(chat_history_id: string, text?: string) {
     this.chat_history_id = chat_history_id;
     this.text = text;
   }
@@ -32,7 +43,7 @@ export class ChatRecord {
   avatar: string;
   messages: Array<ChatMessage> = [];
   chat_history_id: string;
-  renderHtml: string;
+  renderHtml?: string;
 
   constructor(who: Who, avatar: string, messages: Array<ChatMessage>, chat_history_id: string) {
     this.who = who;

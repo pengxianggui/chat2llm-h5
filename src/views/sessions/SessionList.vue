@@ -20,9 +20,9 @@
 <script setup lang="ts">
 import {ref} from "vue";
 import {ChatLineRound} from "@element-plus/icons-vue";
-import {useChatRecords} from "@/stores/chatRecords";
+import {useChatSessions} from "@/stores/chatSessions.ts";
 
-const store = useChatRecords();
+const store = useChatSessions();
 
 const bucket = ref(store.bucket);
 const visible = ref(false)
