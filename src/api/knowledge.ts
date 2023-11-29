@@ -1,4 +1,4 @@
-import $http, {type Res} from "@/axios";
+import $http from "@/axios";
 import type { AxiosPromise } from "axios";
 
 /**

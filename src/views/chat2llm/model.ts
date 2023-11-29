@@ -5,7 +5,7 @@ export enum Who {
 }
 
 export enum ChatMode {
-  LLM, Knowledge
+  LLM, Knowledge,SearchEngine,Agent
 }
 
 export class RequestParam {
@@ -17,9 +17,16 @@ export class RequestParam {
   temperature: number = 0.7; // 温度
   max_tokens: number = 10; // 最大token
   prompt_name: string = 'default'; // 向LLM请求前的prompt封装
+
+  // 下面是知识库模式特有的---------------------
   knowledge_base_name ?: string; // 知识库名
   top_k ?: number = 3;
   score_threshold ?: number = 1;
+  // -----------------------------------------
+
+  // 下面是搜索引擎模式特有的-------------------
+  split_result ?: boolean = false;
+  // -----------------------------------------
 
   constructor(mode?:ChatMode, query?:string, knowledge_base_name?:string) {
     this.mode = mode;
@@ -27,6 +34,7 @@ export class RequestParam {
     this.knowledge_base_name = knowledge_base_name;
   }
 }
+
 
 export class ChatMessage {
   chat_history_id: string;
@@ -56,11 +64,13 @@ export class ChatRecord {
 export class ChatSession {
   sessionId: string;
   sessionName: string;
+  param: RequestParam;
   records: Array<ChatRecord> = [];
 
-  constructor(sessionId: string) {
+  constructor(sessionId: string, param: RequestParam) {
     this.sessionId = sessionId;
     this.sessionName = sessionId;
+    this.param = param;
   }
 
   addQuestion(message: ChatMessage) {
@@ -86,8 +96,12 @@ export class ChatSession {
   addError(err: Error) {
     // @ts-ignore
     const r = this.records.findLast(r => r.who === Who.robot);
-    r.messages.length = 0; // clear
-    r.renderHtml = err.message
+    if (r) {
+      r.messages.length = 0; // clear
+      r.renderHtml = err.message;
+    } else {
+      this.addAnswer(new ChatMessage(null, err.message));
+    }
   }
 
   add(record: ChatRecord) {

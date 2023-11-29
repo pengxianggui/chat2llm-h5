@@ -9,20 +9,22 @@ export const useChatSessions = defineStore('chatRecords', () => {
   const bucket = ref([] as Array<ChatSession>[]);
 
   function get(sessionId: string) {
-    const s = bucket.value.find(s => s.sessionId === sessionId);
-    if (s) {
-      return ref(s);
-    }
-
-    return ref(new ChatSession(sessionId));
+    return bucket.value.find(s => s.sessionId === sessionId);
   }
 
   function put(session: ChatSession) {
-    const s = bucket.value.find(s => s.sessionId === session.sessionId);
-    if (!s) {
+    const index = bucket.value.findIndex(s => s.sessionId === session.sessionId);
+    if (index === -1) {
       bucket.value.push(session);
     }
   }
 
-  return {get, put, bucket}
+  function remove(sessionId: string) {
+    const index = bucket.value.findIndex(s => s.sessionId === sessionId);
+    if (index > -1) {
+      bucket.value.splice(index, 1);
+    }
+  }
+
+  return {get, put, remove, bucket}
 })

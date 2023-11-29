@@ -1,22 +1,27 @@
-import {ChatMessage} from "./model";
+import { ChatMessage, ChatMode } from "./model";
 
 /**
  * 解析响应事件流
+ * @param mode
+ * @param chatId
  * @param res
  * @param onmessage
  * @param ondone
  * @param onerr
  */
-export function parse(res: Response,
-                      onmessage: (msgs: ChatMessage[]) => void,
-                      ondone: () => void,
-                      onerr: (err: Error) => void
+export function parse(
+  mode: ChatMode, 
+  chatId: string,
+  res: Response,
+  onmessage: (msgs: ChatMessage[]) => void,
+  ondone: (chatId: string) => void,
+  onerr: (chatId: string, err: any) => void
 ) {
   // @ts-ignore
   const reader = res.body.getReader();
   const processData = (result) => {
     if (result.done) {
-      ondone();
+      ondone(chatId);
       return;
     }
 
@@ -24,32 +29,51 @@ export function parse(res: Response,
     try {
       const decodeMsg = new TextDecoder('utf-8').decode(value);
       console.debug(decodeMsg)
-      onmessage(parseLine(decodeMsg))
+      onmessage(parseLine(mode, chatId, decodeMsg))
     } catch (err) {
-      onerr(err)
+      onerr(chatId, err)
     }
 
     // 读取下一个片段，重复处理步骤
     return reader.read().then(processData);
   };
 
-  reader.read().then(processData).catch(onerr);
+  reader.read().then(processData).catch(err => {
+    onerr(chatId, err);
+  });
 }
 
 
 /**
  * 解析每行。
- * 期望格式： {"text":"", "chat_history_id":""}
- * 但实际发现存在一定概率出现这样的格式: {"text":"", "chat_history_id":""}{"text":"", "chat_history_id":""}
+ * 期望格式： {"text":""} 或 {"answer": ""}
+ * 但实际发现存在一定概率出现这样的格式: {"text":""}{"text":""}， 或者{"answer": ""}{"answer": ""}
  * @param decodeMsg
  */
-function parseLine(decodeMsg: string) {
+function parseLine(mode: ChatMode, chatId: string, decodeMsg: string): Array<ChatMessage> {
+  let messages;
   try {
     const msg = JSON.parse(decodeMsg)
-    return Array.isArray(msg) ? msg : [msg]
+    messages = Array.isArray(msg) ? msg : [msg]
   } catch (err) {
     // 尝试正则转换为可处理的json格式
     const jsonStr = '[' + decodeMsg.replace(/}{/g, '},{') + ']';
-    return JSON.parse(jsonStr)
+    messages = JSON.parse(jsonStr)
   }
+
+  return messages.map((msg: { text: string; answer: string; }) => {
+    let text!: string; // 赋值断言
+    const chat_history_id: string = chatId;
+    if (mode == ChatMode.LLM) {
+      text = msg.text;
+    } else if (mode == ChatMode.Knowledge) {
+      text = msg.answer;
+    // } else if (mode == ChatMode.SearchEngine) {
+      
+    // } else if (mode == ChatMode.Agent) {
+
+    }
+
+    return new ChatMessage(chat_history_id, text);
+  })
 }

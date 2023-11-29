@@ -1,13 +1,14 @@
-import {ChatMessage, RequestParam} from "./model";
+import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
+import {ChatMessage, ChatMode, RequestParam} from "./model";
 import {parse} from "./parse";
 
 export const EventStreamContentType = 'text/event-stream';
 
 interface FetchStreamOption {
-  onopen?: (res: Response) => void;
+  onopen?: (chatId: string, res: Response) => void;
   onmessage: (msgs: ChatMessage[]) => void;
   ondone: () => void;
-  onerr?: (err: any) => void;
+  onerr?: (chatId: string, err: any) => void;
 }
 
 /**
@@ -24,10 +25,23 @@ export async function fetchStream(param: RequestParam, {
   const onopen = inputOnOpen ?? defaultOnOpen;
   const onerr = inputOnError ?? defaultOnErr;
 
+  const chatId = uuidv4();
+
   async function create() {
     try {
-      // TODO 根据param.mode不同，给不同的path路径
-      const response = await fetch(`/api/chat/chat`, {
+      // 根据param.mode不同，给不同的path路径
+      let path = '/chat/chat';
+      if (param.mode == ChatMode.LLM) {
+        path = '/chat/chat';
+      } else if (param.mode == ChatMode.Knowledge) {
+        path = '/chat/knowledge_base_chat';
+      } else if (param.mode == ChatMode.SearchEngine) {
+        path = '/chat/search_engine_chat';
+      } else if (param.mode == ChatMode.Agent) {
+        path = '/chat/agent_chat';
+      }
+
+      const response = await fetch(`/api${path}`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json'
@@ -35,23 +49,23 @@ export async function fetchStream(param: RequestParam, {
         body: JSON.stringify(param)
       })
 
-      await onopen(response);
-      parse(response, onmessage, ondone, onerr)
+      await onopen(chatId, response);
+      parse(param.mode, chatId, response, onmessage, ondone, onerr)
     } catch (err) {
-      onerr(err)
+      onerr(chatId, err)
     }
   }
 
   await create();
 }
 
-function defaultOnOpen(response: Response) {
+function defaultOnOpen(chatId: string, response: Response) {
   const contentType = response.headers.get('content-type');
   if (!contentType?.startsWith(EventStreamContentType)) {
     throw new Error(`Expected content-type to be ${EventStreamContentType}, Actual: ${contentType}`);
   }
 }
 
-function defaultOnErr(err: any) {
+function defaultOnErr(chatId: string, err: any) {
   console.log(err)
 }

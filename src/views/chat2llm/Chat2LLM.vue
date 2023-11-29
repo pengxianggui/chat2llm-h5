@@ -15,43 +15,37 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, ref } from "vue";
+import { onBeforeUnmount, ref, type Ref } from "vue";
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
-import { ChatMessage, ChatMode, ChatSession, RequestParam } from "./model";
+import { ChatMessage, ChatSession } from "./model";
 import { fetchStream } from "./fetchStream";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
 import { isEmpty } from "lodash";
 import ChatInput from "@/components/chatinput/ChatInput.vue";
 import { INPUT_TIP, REPLAYING } from "@/constant";
 import { useChatSessions } from "@/stores/chatSessions";
-import { useChatParams } from '@/stores/chatParams';
 
 const props = defineProps({
   sessionId: {
     type: String,
     require: true
-  },
-  chatMode: ChatMode,
-  knowledgeName: String
+  }
 })
 
-const param = ref(new RequestParam(props.chatMode, '', props.knowledgeName)); // TODO 一些参数要从配置里取
 const replying = ref(false);
 
+ // 从pinia中获取session
 const sessionStore = useChatSessions();
 // @ts-ignore
-const session: Ref<ChatSession> = sessionStore.get(props.sessionId); // 从pinia中获取session
-
-// 将当前聊天参数设置到store中
-const chatParamStore = useChatParams();
-chatParamStore.set(param.value);
+const session: Ref<ChatSession> = ref(sessionStore.get(props.sessionId));
+const param = session.value.param;
 
 /**
  * 发起提问
  */
 function ask() {
-  const { query } = param.value;
+  const { query } = param;
   if (isEmpty(query)) {
     return;
   }
@@ -62,8 +56,9 @@ function ask() {
 
 // 发起调用并解析
 function fetchAndParse(query?: string) {
+  // TODO 封装历史记录：根据配置的参数取历史的近n条数据，放到参数param里
   fetchStream({
-    ...param.value,
+    ...param,
     query
   }, {
     onopen: function (/*res*/) {
@@ -74,23 +69,25 @@ function fetchAndParse(query?: string) {
     },
     ondone: function () {
       replying.value = false;
-      sessionStore.put(session.value);
     },
     onerr: function (err) {
       replying.value = false;
-      session.value.addError(err)
+      session.value.addError(err);
+      console.error(err);
     }
   })
 }
 
 // 清除输入项
 function clearQuery() {
-  param.value.query = '';
+  param.query = '';
 }
 
 onBeforeUnmount(() => {
-  if (!session.value.isEmpty()) {
-    // TODO 持久化到API接口
+  if (session.value.isEmpty()) {  // 如果会话为空, 则移除
+    sessionStore.remove(props.sessionId)
+  } else { // 如果会话不为空，则调后端API持久化
+    // TODO 持久化会话
   }
 });
 </script>
