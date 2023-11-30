@@ -7,6 +7,17 @@
           <div v-html="r.renderHtml" class="text"></div>
         </div>
       </div>
+
+      <div class="record robot" v-if="thinking">
+        <span class="avatar">🤖</span>
+        <div class="message">
+          <div class="text">
+            <el-icon class="is-loading">
+              <Loading />
+            </el-icon>
+          </div>
+        </div>
+      </div>
     </div>
 
     <ChatInput v-model="param.query" :disabled="replying" :autofocus="true"
@@ -19,6 +30,7 @@ import { onBeforeUnmount, ref, type Ref } from "vue";
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import { ChatMessage, ChatSession } from "./model";
+import { Loading } from "@element-plus/icons-vue";
 import { fetchStream } from "./fetchStream";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
 import { isEmpty } from "lodash";
@@ -33,9 +45,10 @@ const props = defineProps({
   }
 })
 
-const replying = ref(false);
+const replying = ref(false); // 回答中
+const thinking = ref(false); // 思考中
 
- // 从pinia中获取session
+// 从pinia中获取session
 const sessionStore = useChatSessions();
 // @ts-ignore
 const session: Ref<ChatSession> = ref(sessionStore.get(props.sessionId));
@@ -45,10 +58,12 @@ const param = session.value.param;
  * 发起提问
  */
 function ask() {
-  const { query } = param;
+  const { query = '' } = param;
   if (isEmpty(query)) {
     return;
   }
+
+  session.value.fillHistory(); // 历史记录带上
   session.value.addQuestion(new ChatMessage(uuidv4(), query));
   clearQuery();
   fetchAndParse(query);
@@ -56,23 +71,28 @@ function ask() {
 
 // 发起调用并解析
 function fetchAndParse(query?: string) {
-  // TODO 封装历史记录：根据配置的参数取历史的近n条数据，放到参数param里
   fetchStream({
     ...param,
     query
   }, {
+    onbeforeopen() {
+      thinking.value = true;
+    },
     onopen: function (/*res*/) {
       replying.value = true;
     },
     onmessage: function (msgs: ChatMessage[]) {
       msgs.forEach(msg => session.value.addAnswer(msg));
+      thinking.value = false;
     },
     ondone: function () {
       replying.value = false;
+      thinking.value = false;
     },
-    onerr: function (err) {
+    onerr: function (chatId, err) {
       replying.value = false;
-      session.value.addError(err);
+      thinking.value = false;
+      session.value.addError(chatId, err);
       console.error(err);
     }
   })

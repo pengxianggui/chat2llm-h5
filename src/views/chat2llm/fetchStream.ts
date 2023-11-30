@@ -5,6 +5,7 @@ import {parse} from "./parse";
 export const EventStreamContentType = 'text/event-stream';
 
 interface FetchStreamOption {
+  onbeforeopen?: (chatId: string) => void;
   onopen?: (chatId: string, res: Response) => void;
   onmessage: (msgs: ChatMessage[]) => void;
   ondone: () => void;
@@ -14,13 +15,14 @@ interface FetchStreamOption {
 /**
  * 发起并持续接收事件流。
  * @param param
+ * @param onbeforeopen
  * @param inputOnOpen
  * @param onmessage
  * @param ondone
  * @param inputOnError
  */
 export async function fetchStream(param: RequestParam, {
-  onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
+  onbeforeopen, onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
 }: FetchStreamOption) {
   const onopen = inputOnOpen ?? defaultOnOpen;
   const onerr = inputOnError ?? defaultOnErr;
@@ -29,6 +31,8 @@ export async function fetchStream(param: RequestParam, {
 
   async function create() {
     try {
+      onbeforeopen(chatId);
+
       // 根据param.mode不同，给不同的path路径
       let path = '/chat/chat';
       if (param.mode == ChatMode.LLM) {

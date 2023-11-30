@@ -9,14 +9,15 @@ export enum ChatMode {
 }
 
 export class RequestParam {
-  mode?: ChatMode = ChatMode.LLM; // 默认为llm模式
+  mode: ChatMode = ChatMode.LLM; // 默认为llm模式
   query?: string = ''; // 请求的正文
-  history?: [];  // 历史对话
   model_name?: string = 'zhipu-api'; // 模型名称, TODO 前端不可调整，改为PC端可配, 需要改python server
   stream: boolean = true; // 是否流式输出
   temperature: number = 0.7; // 温度
-  max_tokens: number = 10; // 最大token
+  max_tokens: number = 2000; // 最大token
   prompt_name: string = 'default'; // 向LLM请求前的prompt封装
+  history_count?:number = 5; // 历史对话数量, 前端参数
+  history?: Array<{role: string, content: string}> = []  // 历史对话
 
   // 下面是知识库模式特有的---------------------
   knowledge_base_name ?: string; // 知识库名
@@ -28,7 +29,7 @@ export class RequestParam {
   split_result ?: boolean = false;
   // -----------------------------------------
 
-  constructor(mode?:ChatMode, query?:string, knowledge_base_name?:string) {
+  constructor(mode:ChatMode, query?:string, knowledge_base_name?:string) {
     this.mode = mode;
     this.query = query;
     this.knowledge_base_name = knowledge_base_name;
@@ -38,9 +39,9 @@ export class RequestParam {
 
 export class ChatMessage {
   chat_history_id: string;
-  text?: string;
+  text: string = '';
 
-  constructor(chat_history_id: string, text?: string) {
+  constructor(chat_history_id: string, text: string) {
     this.chat_history_id = chat_history_id;
     this.text = text;
   }
@@ -51,7 +52,7 @@ export class ChatRecord {
   avatar: string;
   messages: Array<ChatMessage> = [];
   chat_history_id: string;
-  renderHtml?: string;
+  renderHtml: string = '';
 
   constructor(who: Who, avatar: string, messages: Array<ChatMessage>, chat_history_id: string) {
     this.who = who;
@@ -93,24 +94,40 @@ export class ChatSession {
     r.renderHtml = markdown.render(messageText);
   }
 
-  addError(err: Error) {
+  addError(chat_history_id: string, err: Error) {
     // @ts-ignore
     const r = this.records.findLast(r => r.who === Who.robot);
     if (r) {
       r.messages.length = 0; // clear
       r.renderHtml = err.message;
     } else {
-      this.addAnswer(new ChatMessage(null, err.message));
+      this.addAnswer(new ChatMessage(chat_history_id, err.message));
     }
   }
 
   add(record: ChatRecord) {
     if (this.records.length === 0) {
       // 初始化sessionName
-      const {renderHtml} = record;
+      const {renderHtml = '对话'} = record;
       this.sessionName = renderHtml.substring(0, 30); // 截取前7位作为sessionName
     }
     this.records.push(record);
+  }
+
+  // 填充历史记录到param.history里， 根据param.history_count，取records的最近几条
+  fillHistory() {
+    if (this.records.length == 0) {
+      return;
+    }
+
+    const {history_count = 0} = this.param;
+    const history = this.records.slice(-history_count).map(r => {
+      return {
+        role: r.who == Who.robot ? 'assistant' : 'user',
+        content: r.renderHtml
+      }
+    })
+    this.param.history = history
   }
 
   isEmpty() {

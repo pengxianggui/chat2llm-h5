@@ -7,7 +7,7 @@
     </div>
 
     <div class="title">
-      <span>{{ route.meta.title }}</span>
+      <span>{{ route.meta.title }}</span>&nbsp;
       <el-tag type="info" v-if="sessionId && session.param.mode == ChatMode.Knowledge">{{ session.param.knowledge_base_name }}</el-tag>
     </div>
 

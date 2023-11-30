@@ -8,7 +8,7 @@
                 <div>参数配置</div>
             </template>
             <!-- form -->
-            <el-form :model="chatParam">
+            <el-form :model="chatParam" label-width="auto" label-suffix=":">
                 <el-form-item prop="mode" label="对话模式">
                     <h4>{{ chatParam.mode == ChatMode.LLM ? '非知识库模式' : '知识库模式' }}</h4>
                 </el-form-item>
@@ -16,10 +16,10 @@
                     <h4>{{ chatParam.knowledge_base_name }}</h4>
                 </el-form-item>
                 <el-form-item prop="temperature" label="历史对话轮数">
-                    <!-- <el-slider v-model="chatParam.temperature" :min="0" :max="1" /> -->
+                    <el-slider v-model="chatParam.history_count" :min="0" :max="10" />
                 </el-form-item>
                 <el-form-item prop="temperature" label="温度">
-                    <el-slider v-model="chatParam.temperature" :min="0" :max="1" :step="0.1" />
+                    <el-slider v-model="chatParam.temperature" :min="0" :max="1" :step="0.01" />
                 </el-form-item>
                 <el-form-item prop="top_k" label="匹配知识条数" v-if="chatParam.mode == ChatMode.Knowledge">
                     <el-slider v-model="chatParam.top_k" :min="1" :max="10" :step="1" />

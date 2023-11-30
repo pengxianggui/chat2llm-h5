@@ -4,6 +4,8 @@ import Layout from "@/views/Layout.vue";
 import Chat2LLM from "@/views/chat2llm/Chat2LLM.vue";
 import { useChatSessions } from "@/stores/chatSessions";
 import { RequestParam, ChatSession } from "@/views/chat2llm/model";
+import { ChatMode } from '../views/chat2llm/model';
+import {isEmpty} from 'lodash'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,10 +37,13 @@ const router = createRouter({
           },
           // 在路由钩子里初始化session，并塞到store里，保证header>setting和chat2llm里都能获取到
           beforeEnter: (to, /*from*/) => {
-            const {params:{sessionId}, query:{chatMode, knowledgeName}} = to;
+            const {params:{sessionId}, query:{chatMode = ChatMode.LLM, knowledgeName}} = to;
+            if (isEmpty(sessionId)) {
+              return {name: 'home'}; // 回主页
+            }
             const sessionStore = useChatSessions();
-            let session: ChatSession = sessionStore.get(sessionId);
-            if (!session) {
+            let session: ChatSession | any = sessionStore.get(sessionId);
+            if (isEmpty(session)) {
               const param = new RequestParam(chatMode, '', knowledgeName);
               session = new ChatSession(sessionId, param);
               sessionStore.put(session);
