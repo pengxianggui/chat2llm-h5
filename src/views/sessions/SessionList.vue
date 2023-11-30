@@ -1,7 +1,7 @@
 <template>
   <div class="sessions">
     <el-button class="session-btn" :icon="ChatLineRound" circle size="large" @click="visible = true"></el-button>
-    <el-drawer v-model="visible" direction="ltr" size="60%" class="session-drawer" :append-to-body="false"
+    <el-drawer v-model="visible" direction="ltr" size="70%" class="session-drawer" :append-to-body="false"
       :show-close="true">
       <template #header>
         <div>对话历史</div>

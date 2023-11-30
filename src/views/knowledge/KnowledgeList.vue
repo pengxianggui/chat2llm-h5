@@ -43,6 +43,7 @@ function toChat(knowledgeName: string) {
 
     .knowledge {
         // height: 4rem;
+        cursor: pointer;
 
         :deep(.el-card__header) {
             padding: 0.1rem 1rem;
