@@ -1,4 +1,5 @@
 import { ChatMessage, ChatMode } from "./model";
+import {isEmpty} from 'lodash';
 
 /**
  * 解析响应事件流
@@ -10,7 +11,7 @@ import { ChatMessage, ChatMode } from "./model";
  * @param onerr
  */
 export function parse(
-  mode: ChatMode, 
+  mode: ChatMode,
   chatId: string,
   res: Response,
   onmessage: (msgs: ChatMessage[]) => void,
@@ -18,29 +19,34 @@ export function parse(
   onerr: (chatId: string, err: any) => void
 ) {
   // @ts-ignore
-  const reader = res.body.getReader();
-  const processData = (result) => {
-    if (result.done) {
-      ondone(chatId);
-      return;
-    }
+  try {
+    const reader = res.body.getReader();
+    const processData = (result) => {
+      if (result.done) {
+        ondone(chatId);
+        return;
+      }
 
-    const value = result.value;
-    try {
-      const decodeMsg = new TextDecoder('utf-8').decode(value);
-      console.debug(decodeMsg)
-      onmessage(parseLine(mode, chatId, decodeMsg))
-    } catch (err) {
-      onerr(chatId, err)
-    }
+      const value = result.value;
+      try {
+        const decodeMsg = new TextDecoder('utf-8').decode(value);
+        console.debug(decodeMsg)
+        const messages = parseLine(mode, chatId, decodeMsg);
+        onmessage(messages)
+      } catch (err) {
+        onerr(chatId, err)
+      }
 
-    // 读取下一个片段，重复处理步骤
-    return reader.read().then(processData);
-  };
+      // 读取下一个片段，重复处理步骤
+      return reader.read().then(processData);
+    };
 
-  reader.read().then(processData).catch(err => {
-    onerr(chatId, err);
-  });
+    reader.read().then(processData).catch(err => {
+      onerr(chatId, err);
+    });
+  } catch (err) {
+      onerr(chatId, new Error('发生错误, 请重试:' + err.message))
+  }
 }
 
 
@@ -68,12 +74,12 @@ function parseLine(mode: ChatMode, chatId: string, decodeMsg: string): Array<Cha
       text = msg.text;
     } else if (mode == ChatMode.Knowledge) {
       text = msg.answer;
-    // } else if (mode == ChatMode.SearchEngine) {
-      
-    // } else if (mode == ChatMode.Agent) {
+      // } else if (mode == ChatMode.SearchEngine) {
+
+      // } else if (mode == ChatMode.Agent) {
 
     }
 
     return new ChatMessage(chat_history_id, text);
-  })
+  }).filter(msg => !isEmpty(msg.text))
 }

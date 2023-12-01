@@ -16,7 +16,7 @@ export class RequestParam {
   temperature: number = 0.7; // 温度
   max_tokens: number = 2000; // 最大token
   prompt_name: string = 'default'; // 向LLM请求前的prompt封装
-  history_count?:number = 5; // 历史对话数量, 前端参数
+  history_count?:number = 3; // 历史对话数量, 前端参数
   history?: Array<{role: string, content: string}> = []  // 历史对话
 
   // 下面是知识库模式特有的---------------------
@@ -33,6 +33,9 @@ export class RequestParam {
     this.mode = mode;
     this.query = query;
     this.knowledge_base_name = knowledge_base_name;
+    if (this.mode == ChatMode.Knowledge || this.mode == ChatMode.Agent) {
+      this.temperature = 0;
+    }
   }
 }
 
@@ -83,7 +86,7 @@ export class ChatSession {
 
   addAnswer(message: ChatMessage) {
     const {chat_history_id} = message;
-    let r = this.records.find(r => r.chat_history_id === chat_history_id);
+    let r = this.records.findLast(r => r.chat_history_id === chat_history_id);
     if (r) {
       r.messages.push(message);
     } else {
@@ -96,11 +99,11 @@ export class ChatSession {
 
   addError(chat_history_id: string, err: Error) {
     // @ts-ignore
-    const r = this.records.findLast(r => r.who === Who.robot);
-    if (r) {
+    const r = this.records.findLast(r => r.chat_history_id === chat_history_id);
+    if (r) { // 存在此对话，则清空此次回复并将错误信息追加上去
       r.messages.length = 0; // clear
       r.renderHtml = err.message;
-    } else {
+    } else { // 不存在此次对话，则
       this.addAnswer(new ChatMessage(chat_history_id, err.message));
     }
   }
@@ -121,12 +124,18 @@ export class ChatSession {
     }
 
     const {history_count = 0} = this.param;
-    const history = this.records.slice(-history_count).map(r => {
-      return {
-        role: r.who == Who.robot ? 'assistant' : 'user',
-        content: r.renderHtml
-      }
-    })
+
+    let history;
+    if (history_count == 0) {
+      history = []
+    } else {
+      history = this.records.slice(-history_count).map(r => {
+        return {
+          role: r.who == Who.robot ? 'assistant' : 'user',
+          content: r.renderHtml
+        }
+      })
+    }
     this.param.history = history
   }
 

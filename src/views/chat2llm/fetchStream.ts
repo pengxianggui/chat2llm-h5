@@ -8,7 +8,7 @@ interface FetchStreamOption {
   onbeforeopen?: (chatId: string) => void;
   onopen?: (chatId: string, res: Response) => void;
   onmessage: (msgs: ChatMessage[]) => void;
-  ondone: () => void;
+  ondone: (chatId: string) => void;
   onerr?: (chatId: string, err: any) => void;
 }
 
@@ -22,8 +22,9 @@ interface FetchStreamOption {
  * @param inputOnError
  */
 export async function fetchStream(param: RequestParam, {
-  onbeforeopen, onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
+  onbeforeopen: inputOnBeforeOpen, onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
 }: FetchStreamOption) {
+  const onbeforeopen = inputOnBeforeOpen ?? defaultOnBeforeOpen;
   const onopen = inputOnOpen ?? defaultOnOpen;
   const onerr = inputOnError ?? defaultOnErr;
 
@@ -61,6 +62,10 @@ export async function fetchStream(param: RequestParam, {
   }
 
   await create();
+}
+
+function defaultOnBeforeOpen(chatId: string) {
+  // ..
 }
 
 function defaultOnOpen(chatId: string, response: Response) {
