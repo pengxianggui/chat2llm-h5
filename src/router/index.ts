@@ -37,14 +37,18 @@ const router = createRouter({
           },
           // 在路由钩子里初始化session，并塞到store里，保证header>setting和chat2llm里都能获取到
           beforeEnter: (to, /*from*/) => {
-            const {params:{sessionId}, query:{chatMode = ChatMode.LLM, knowledgeName}} = to;
+            const {params:{sessionId}, query:{knowledgeName}} = to;
             if (isEmpty(sessionId)) {
               return {name: 'home'}; // 回主页
             }
             const sessionStore = useChatSessions();
+            // @ts-ignore
             let session: ChatSession | any = sessionStore.get(sessionId);
-            if (isEmpty(session)) {
+            if (isEmpty(session)) { // 新建会话
+              const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
+              // @ts-ignore
               const param = new RequestParam(chatMode, '', knowledgeName);
+              // @ts-ignore
               session = new ChatSession(sessionId, param);
               sessionStore.put(session);
             }

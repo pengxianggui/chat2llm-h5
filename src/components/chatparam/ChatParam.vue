@@ -1,8 +1,10 @@
 <template>
     <div class="param-config">
-        <el-button class="setting" :icon="Setting" circle size="large" @click="visible = true"></el-button>
+        <el-icon size="1.4rem" @click="visible = true">
+            <Setting />
+        </el-icon>
 
-        <el-drawer v-model="visible" direction="rtl" size="70%" class="session-drawer" :append-to-body="false"
+        <el-drawer v-model="visible" direction="rtl" size="80%" class="session-drawer" :append-to-body="false"
             :show-close="true">
             <template #header>
                 <div>参数配置</div>
@@ -61,3 +63,10 @@ const chatParam = session.value.param;
 const visible = ref(false);
 
 </script>
+
+<style scoped lang="scss">
+.param-config {
+  display: flex;
+  align-items: center;
+}
+</style>

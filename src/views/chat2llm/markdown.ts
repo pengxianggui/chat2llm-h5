@@ -33,7 +33,8 @@ markdownit.use(markdownStyle, {
   th: 'padding: 6px 13px;' +
     'border: 1px solid rgba(49, 51, 63, 0.2);' +
     'background-color: rgba(49, 51, 63, 0.2);' +
-    'font-weight: bold;',
+    'font-weight: bold;' +
+    'white-space: nowrap;',
   td: 'padding: 6px 13px;' +
     'border: 1px solid rgba(49, 51, 63, 0.2);' +
     'text-align: center;',

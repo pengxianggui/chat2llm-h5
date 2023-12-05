@@ -1,19 +1,14 @@
 <template>
   <div class="header">
-    <div class="left">
-      <el-button class="back" :icon="Back" circle size="large" @click="router.back()"
-        v-if="route.meta.showBack"></el-button>
-      <SessionList v-else></SessionList>
-    </div>
+    <el-icon size="1.4rem" @click="router.back()" v-if="route.meta.showBack">
+      <Back />
+    </el-icon>
+    <SessionList v-else></SessionList>
 
-    <div class="title">
-      <span>{{ route.meta.title }}</span>&nbsp;
-      <el-tag type="info" v-if="sessionId && session.param.mode == ChatMode.Knowledge">{{ session.param.knowledge_base_name }}</el-tag>
-    </div>
+    <h4 class="title">{{ title }}</h4>
 
-    <div class="right">
-      <ChatParam v-if="sessionId" :session-id="sessionId"></ChatParam>
-    </div>
+    <ChatParam v-if="sessionId" :session-id="sessionId"></ChatParam>
+    <span v-else></span>
   </div>
 </template>
 
@@ -22,28 +17,41 @@ import { useRouter, useRoute } from "vue-router";
 import { Back } from '@element-plus/icons-vue'
 import SessionList from "@/views/sessions/SessionList.vue";
 import { watch, ref } from "vue";
-import { useChatSessions } from "@/stores/chatSessions";
+import { useKnowledgeStore } from "@/stores/knowledge";
+import { useChatSessions } from '@/stores/chatSessions';
 import { computed } from "vue";
-import { ChatMode } from "./chat2llm/model";
+import { isEmpty } from "lodash";
 
 const route = useRoute();
 const router = useRouter();
 const sessionId = ref(route.params.sessionId);
+const knowledgeName = ref(route.query.knowledgeName)
 
 // important! 保证sessionId值同步取值当前路由path中的sessionId
 watch(
   () => route,
   () => {
     sessionId.value = route.params.sessionId;
+    knowledgeName.value = route.query.knowledgeName
   },
   { immediate: true, deep: true }
 );
 
-const session = computed(() => {
-    // 从pinia中获取session
+const title = computed(() => {
+  if (!isEmpty(sessionId.value)) {
     const sessionStore = useChatSessions();
-    // @ts-ignore
-    return sessionStore.get(sessionId.value);
+    const session = sessionStore.get(sessionId.value);
+    const { param: { knowledge_base_name } } = session
+    if (isEmpty(knowledge_base_name)) {
+      return route.meta.title;
+    }
+    // 从pinia中获取知识库详情
+    const kbStore = useKnowledgeStore();
+    const kb = kbStore.knowledges.find(kb => kb.kb_name === knowledge_base_name)
+    return kb?.kb_zh_name
+  }
+
+  return route.meta.title;
 })
 </script>
 
@@ -53,7 +61,7 @@ const session = computed(() => {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.3rem 1rem;
 
   .title {
     font-weight: bold;

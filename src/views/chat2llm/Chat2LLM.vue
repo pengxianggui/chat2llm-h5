@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
 
         &>.text {
           display: inline-block;
-          background-color: #ffffff;
+          background-color: #f4f4f4;
         }
       }
     }

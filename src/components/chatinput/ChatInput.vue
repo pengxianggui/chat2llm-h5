@@ -1,19 +1,16 @@
 <template>
   <div class="input-box">
-    <el-input class="input" type="textarea" :placeholder="placeholder"
-              ref="input"
-              v-model="inputValue" :disabled="disabled"
-              @focus="$emit('focus')"
-              @input="handleInput"
-              @keyup.shift.enter="send"
-              :autosize="{ maxRows: 5 }">
+    <el-input class="input" type="textarea" :placeholder="placeholder" ref="input" v-model="inputValue"
+      :disabled="disabled" @focus="$emit('focus')" @input="handleInput" @keyup.shift.enter="send"
+      :autosize="{ maxRows: 5 }">
     </el-input>
-    <el-button round type="info" @click="send" :disabled="disabled">发送</el-button>
+    <el-button class="send-btn" :class="{ 'disabled': disabled || !inputValue }" round type="info" @click="send"
+      :disabled="disabled || !inputValue">发送</el-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import {onMounted, toRef, ref} from "vue";
+import { onMounted, toRef, ref } from "vue";
 
 const props = defineProps({
   modelValue: String,
@@ -56,6 +53,8 @@ function send() {
   align-items: center;
   padding: 0.3rem 1rem;
   background-color: #fff;
+  // border-top: 1PX solid rgb(214, 214, 214);
+  box-shadow: 0 -1PX 6PX rgba(0, 0, 0, 0.1);
 
   .input {
     flex: 1;
@@ -83,6 +82,14 @@ function send() {
     :deep(.el-textarea__inner::placeholder) {
       color: #d1d1d1;
     }
+  }
+
+  .send-btn {
+    background-color: rgb(59, 59, 59);
+    border: none;
+  }
+  .send-btn.disabled {
+    background-color: #b2b2b2;
   }
 }
 </style>
