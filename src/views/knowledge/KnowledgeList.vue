@@ -4,10 +4,10 @@
             <template #header>
                 <h4>
                     <span>📒</span>&nbsp;
-                    <span>{{ kb.kb_zh_name }}</span>
+                    <span v-ellipsis="1">{{ kb.kb_zh_name }}</span>
                 </h4>
             </template>
-            <span>{{ kb.kb_info }}</span>
+            <span  v-ellipsis="3">{{ kb.kb_info }}</span>
         </el-card>
     </div>
 </template>

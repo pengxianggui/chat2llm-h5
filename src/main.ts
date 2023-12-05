@@ -6,6 +6,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { useKnowledgeStore } from '@/stores/knowledge.ts'
+import directiveInstaller from '@/directive/index.ts'
 
 const app = createApp(App)
 
@@ -14,5 +15,7 @@ app.use(router)
 
 const kbStore = useKnowledgeStore();
 kbStore.initKbs();
+
+directiveInstaller(app)
 
 app.mount('#app')

@@ -23,7 +23,7 @@ function chat2llm(sessionId?: String) {
     sessionId = uuidv4()
   }
   router.push({
-    path: `chat/${sessionId}`,
+    path: `/chat/${sessionId}`,
     query: {
       chatMode: ChatMode.LLM
     }

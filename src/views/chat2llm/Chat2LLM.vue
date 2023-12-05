@@ -1,12 +1,17 @@
 <template>
   <div class="body">
     <div class="records">
-      <div v-for="(r) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
-        <span class="avatar">{{ r.avatar }}</span>
-        <div class="message">
-          <div v-html="r.renderHtml" class="text"></div>
+      <template v-if="!session.isEmpty()">
+        <div v-for="(r) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
+          <span class="avatar">{{ r.avatar }}</span>
+          <div class="message">
+            <div v-html="r.renderHtml" class="text"></div>
+          </div>
         </div>
-      </div>
+      </template>
+      <template v-else>
+        <el-alert :title="blankTip" type="warning" class="record blank-tip" show-icon :closable="false" />
+      </template>
 
       <div class="record robot" v-if="thinking">
         <span class="avatar">🤖</span>
@@ -26,10 +31,10 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, ref, type Ref } from "vue";
+import { computed, onBeforeUnmount, ref, type Ref } from "vue";
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
-import { ChatMessage, ChatSession } from "./model";
+import { ChatMessage, ChatMode, ChatSession } from "./model";
 import { Loading } from "@element-plus/icons-vue";
 import { fetchStream } from "./fetchStream";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
@@ -53,6 +58,20 @@ const sessionStore = useChatSessions();
 // @ts-ignore
 const session: Ref<ChatSession> = ref(sessionStore.get(props.sessionId));
 const param = session.value.param;
+
+const blankTip = computed(() => {
+  const mode = session.value.param.mode;
+  let tip;
+  switch (mode) {
+    case ChatMode.Knowledge:
+      tip = '您当前正处于知识库模式中, 请咨询跟知识库相关的内容';
+      break;
+    default:
+      tip = '您当前正处于闲聊模式中, 回答内容不限定范围';
+      break;
+  }
+  return `${tip}。请注意: AI答复不保证准确性，请自行甄别。`
+})
 
 /**
  * 发起提问
@@ -88,7 +107,7 @@ function fetchAndParse(query?: string) {
     ondone: function (chatId: string) {
       replying.value = false;
       thinking.value = false;
-      
+
       const r = session.value.records.find(r => r.chat_history_id == chatId)
       if (!r) { // 没有此次对话记录，说明有问题，给出错误
         // TODO 因为当有记性时(>0)，后端会发生一个错误. issue: https://github.com/chatchat-space/Langchain-Chatchat/issues/2228
@@ -186,6 +205,14 @@ onBeforeUnmount(() => {
           background-color: #f4f4f4;
         }
       }
+    }
+
+    .blank-tip {
+      border-radius: 0.6rem;
+      padding: 0.5rem;
+      border: 1px solid rgb(219, 219, 219);
+      width: 90%;
+      margin: 0.5rem auto;
     }
 
   }
