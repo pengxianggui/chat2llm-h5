@@ -1,6 +1,6 @@
 <template>
   <div class="header">
-    <el-icon size="1.4rem" @click="router.back()" v-if="route.meta.showBack">
+    <el-icon size="1.4rem" @click="back" v-if="route.meta.showBack">
       <Back />
     </el-icon>
     <SessionList v-else></SessionList>
@@ -53,6 +53,12 @@ const title = computed(() => {
 
   return route.meta.title;
 })
+
+function back() {
+  router.push({
+    path: '/home'
+  })
+}
 </script>
 
 <style scoped lang="scss">

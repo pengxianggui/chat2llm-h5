@@ -1,7 +1,11 @@
 <template>
   <main>
     <Header class="header"></Header>
-    <RouterView class="body"/>
+    <router-view class="body" v-slot="{ Component }">
+      <transition name="slide-fade">
+        <component :is="Component"></component>
+      </transition>
+    </router-view>
     <Footer class="footer"></Footer>
   </main>
 </template>
