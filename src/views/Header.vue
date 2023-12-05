@@ -66,9 +66,5 @@ const title = computed(() => {
   .title {
     font-weight: bold;
   }
-
-  :deep(.el-overlay) {
-    position: absolute;
-  }
 }
 </style>

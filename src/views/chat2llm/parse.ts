@@ -1,5 +1,5 @@
 import { ChatMessage, ChatMode } from "./model";
-import {isEmpty} from 'lodash';
+import { isEmpty } from 'lodash';
 
 /**
  * 解析响应事件流
@@ -45,7 +45,7 @@ export function parse(
       onerr(chatId, err);
     });
   } catch (err) {
-      onerr(chatId, new Error('发生错误, 请重试:' + err.message))
+    onerr(chatId, new Error('发生错误, 请重试:' + err.message))
   }
 }
 
@@ -67,19 +67,26 @@ function parseLine(mode: ChatMode, chatId: string, decodeMsg: string): Array<Cha
     messages = JSON.parse(jsonStr)
   }
 
-  return messages.map((msg: { text: string; answer: string; }) => {
+  return messages.map((msg: { text: string; answer: string; docs: Array<string>; }) => {
     let text!: string; // 赋值断言
     const chat_history_id: string = chatId;
-    if (mode == ChatMode.LLM) {
-      text = msg.text;
-    } else if (mode == ChatMode.Knowledge) {
-      text = msg.answer;
+    if (mode == ChatMode.Knowledge) {
+      return buildMessageForKnowledge(chatId, msg);
       // } else if (mode == ChatMode.SearchEngine) {
 
       // } else if (mode == ChatMode.Agent) {
-
+    } else {
+      text = msg.text;
+      return new ChatMessage(chat_history_id, text)
     }
-
-    return new ChatMessage(chat_history_id, text);
   }).filter(msg => !isEmpty(msg.text))
+}
+
+function buildMessageForKnowledge(chatId: string, msg: { answer: string; docs: Array<string>; }) {
+  if (Object.prototype.hasOwnProperty.call(msg, 'docs')) {
+    return new ChatMessage(chatId, msg.docs.join('\n'), true);
+  } else if (Object.prototype.hasOwnProperty.call(msg, 'answer')) {
+    return new ChatMessage(chatId, msg.answer);
+  }
+  return new ChatMessage(chatId, JSON.stringify(msg));
 }

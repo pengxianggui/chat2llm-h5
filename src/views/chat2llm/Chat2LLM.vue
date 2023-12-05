@@ -5,7 +5,13 @@
         <div v-for="(r) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
           <span class="avatar">{{ r.avatar }}</span>
           <div class="message">
-            <div v-html="r.renderHtml" class="text"></div>
+            <div v-html="r.messageHtml" class="text"></div>
+            <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot">
+              <div></div>
+              <div>
+                <QuotationSource :docs="r.doc" v-if="!isEmpty(r.doc)"></QuotationSource>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -34,12 +40,13 @@
 import { computed, onBeforeUnmount, ref, type Ref } from "vue";
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
-import { ChatMessage, ChatMode, ChatSession } from "./model";
+import { ChatMessage, ChatMode, Who, ChatSession } from "./model";
 import { Loading } from "@element-plus/icons-vue";
 import { fetchStream } from "./fetchStream";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
 import { isEmpty } from "lodash";
 import ChatInput from "@/components/chatinput/ChatInput.vue";
+import QuotationSource from "./QuotationSource.vue";
 import { INPUT_TIP, REPLAYING } from "@/constant";
 import { useChatSessions } from "@/stores/chatSessions";
 
@@ -166,13 +173,19 @@ onBeforeUnmount(() => {
       }
 
       .message {
-        flex: 1;
-        width: 0;
+        // flex: 1;
+        border-radius: 0.6rem;
+        padding: 0.5rem;
 
         &>.text {
           max-width: 100%;
-          border-radius: 0.6rem;
-          padding: 0.5rem;
+        }
+
+        & > .opr {
+          display: flex;
+          & > :first-child {
+            flex: 1;
+          }
         }
       }
     }
@@ -184,10 +197,10 @@ onBeforeUnmount(() => {
         margin-left: $avatarSide;
         margin-right: 0.2rem;
         text-align: right;
+        background-color: #94ea69;
 
         &>.text {
           display: inline-block;
-          background-color: #94ea69;
           text-align: left;
         }
       }
@@ -199,10 +212,10 @@ onBeforeUnmount(() => {
       .message {
         margin-left: 0.2rem;
         margin-right: $avatarSide;
+        border: 1px solid #eaeaea;
 
         &>.text {
           display: inline-block;
-          background-color: #f4f4f4;
         }
       }
     }

@@ -3,8 +3,12 @@
   $colors: ()
 );
 
-.session-drawer {
+.drawer {
   .el-drawer__header {
     margin: 0 !important;
   }
+}
+
+main .el-overlay {
+  position: absolute !important;
 }

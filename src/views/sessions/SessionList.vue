@@ -3,7 +3,7 @@
     <el-icon size="1.4rem" @click="visible = true">
       <ChatLineRound />
     </el-icon>
-    <el-drawer v-model="visible" direction="ltr" size="80%" class="session-drawer" :append-to-body="false"
+    <el-drawer v-model="visible" direction="ltr" size="80%" class="drawer" :append-to-body="false"
       :show-close="true">
       <template #header>
         <div>对话历史</div>

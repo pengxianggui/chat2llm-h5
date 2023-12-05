@@ -4,8 +4,8 @@
             <Setting />
         </el-icon>
 
-        <el-drawer v-model="visible" direction="rtl" size="80%" class="session-drawer" :append-to-body="false"
-            :show-close="true">
+        <el-drawer v-model="visible" direction="rtl" size="80%" class="drawer" :append-to-body="false"
+            :show-close="false">
             <template #header>
                 <div>参数配置</div>
             </template>
