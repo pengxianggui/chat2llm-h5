@@ -6,8 +6,8 @@
           <span class="avatar">{{ r.avatar }}</span>
           <div class="message">
             <div v-html="r.messageHtml" class="text"></div>
-            <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot">
-              <div></div>
+            <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot && !replying">
+              <span>以上内容为 AI 生成，不代表开发者立场</span>
               <div>
                 <QuotationSource :docs="r.doc" v-if="!isEmpty(r.doc)"></QuotationSource>
               </div>
@@ -201,6 +201,11 @@ onBeforeUnmount(() => {
 
         &>.opr {
           display: flex;
+          align-items: center;
+          font-size: 0.6rem;
+          color: rgb(154, 154, 154);
+          border-top: 1PX solid rgb(233, 233, 233);
+          margin-top: 0.5rem;
 
           &> :first-child {
             flex: 1;
