@@ -49,7 +49,7 @@ const router = createRouter({
               // @ts-ignore
               const param = new RequestParam(chatMode, '', knowledgeName);
               // @ts-ignore
-              session = new ChatSession(sessionId, param);
+              session = new ChatSession(sessionId, chatMode, param);
               sessionStore.put(session);
             }
             return true;

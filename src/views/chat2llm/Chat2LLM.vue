@@ -31,8 +31,8 @@
       </div>
     </div>
 
-    <ChatInput v-model="param.query" :disabled="replying" :autofocus="true"
-      :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask"></ChatInput>
+    <ChatInput v-model="param.query" :replying="replying" :disabled="replying" :autofocus="true"
+      :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask" @abort="abort"></ChatInput>
   </div>
 </template>
 
@@ -65,9 +65,10 @@ const sessionStore = useChatSessions();
 // @ts-ignore
 const session: Ref<ChatSession> = ref(sessionStore.get(props.sessionId));
 const param = session.value.param;
+let ctrl: AbortController; // 控制sse停止
 
 const blankTip = computed(() => {
-  const mode = session.value.param.mode;
+  const mode = session.value.mode;
   let tip;
   switch (mode) {
     case ChatMode.Knowledge:
@@ -77,7 +78,7 @@ const blankTip = computed(() => {
       tip = '您当前正处于闲聊模式中, 回答内容不限定范围';
       break;
   }
-  return `${tip}。请注意: AI答复不保证准确性，请自行甄别。`
+  return `${tip}。请注意: AI答复不保证准确性, 请自行甄别。`
 })
 
 /**
@@ -95,9 +96,15 @@ function ask() {
   fetchAndParse(query);
 }
 
+function abort() {
+  if (ctrl != undefined) {
+    ctrl.abort();
+  }
+}
+
 // 发起调用并解析
-function fetchAndParse(query?: string) {
-  fetchStream({
+async function fetchAndParse(query?: string) {
+  ctrl = await fetchStream(session.value.mode, {
     ...param,
     query
   }, {
@@ -131,10 +138,15 @@ function fetchAndParse(query?: string) {
     onerr: function (chatId, err) {
       replying.value = false;
       thinking.value = false;
+      if (err instanceof DOMException && err.name == 'AbortError') {
+        // 主动终止响应..
+        console.log('手动终止: ' + err.message);
+        return;
+      }
       session.value.addError(chatId, err);
       console.error(err);
     }
-  })
+  });
 }
 
 // 清除输入项
@@ -181,6 +193,7 @@ onBeforeUnmount(() => {
         // flex: 1;
         border-radius: 0.6rem;
         padding: 0.5rem;
+        overflow: auto;
 
         &>.text {
           max-width: 100%;

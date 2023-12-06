@@ -5,7 +5,8 @@
       :autosize="{ maxRows: 5 }">
     </el-input>
     <el-button class="send-btn" :class="{ 'disabled': disabled || !inputValue }" round type="info" @click="send"
-      :disabled="disabled || !inputValue">发送</el-button>
+      :disabled="disabled || !inputValue" v-if="!replying">发送</el-button>
+    <el-button class="send-btn" round type="danger" @click="$emit('abort')" v-else>停止响应</el-button>
   </div>
 </template>
 
@@ -14,6 +15,11 @@ import { onMounted, toRef, ref } from "vue";
 
 const props = defineProps({
   modelValue: String,
+  replying: {
+    type: Boolean,
+    require: false,
+    default: false
+  },
   disabled: {
     type: Boolean,
     require: false,

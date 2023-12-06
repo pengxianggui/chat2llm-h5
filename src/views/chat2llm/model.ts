@@ -9,7 +9,6 @@ export enum ChatMode {
 }
 
 export class RequestParam {
-  mode: ChatMode = ChatMode.LLM; // 默认为llm模式
   query?: string = ''; // 请求的正文
   model_name?: string = 'zhipu-api'; // 模型名称, TODO 前端不可调整，改为PC端可配, 需要改python server
   stream: boolean = true; // 是否流式输出
@@ -33,10 +32,9 @@ export class RequestParam {
   // -----------------------------------------
 
   constructor(mode: ChatMode, query?: string, knowledge_base_name?: string) {
-    this.mode = mode;
     this.query = query;
     this.knowledge_base_name = knowledge_base_name;
-    if (this.mode == ChatMode.Knowledge || this.mode == ChatMode.Agent) {
+    if (mode == ChatMode.Knowledge || mode == ChatMode.Agent) {
       this.temperature = 0;
     }
   }
@@ -65,7 +63,7 @@ export class ChatRecord {
 
   constructor(who: Who, chat_history_id: string) {
     this.who = who;
-    this.avatar = (who === Who.robot ? '🤖' : '👥');
+    this.avatar = (who === Who.robot ? '🤖' : '🧒🏻');
     this.chat_history_id = chat_history_id;
   }
 }
@@ -73,12 +71,14 @@ export class ChatRecord {
 export class ChatSession {
   sessionId: string;
   sessionName: string;
+  mode: ChatMode;
   param: RequestParam;
   records: Array<ChatRecord> = [];
 
-  constructor(sessionId: string, param: RequestParam) {
+  constructor(sessionId: string, mode: ChatMode, param: RequestParam) {
     this.sessionId = sessionId;
-    this.sessionName = sessionId;
+    this.sessionName = sessionId; // 初始化采用sessionId作为名称
+    this.mode = mode;
     this.param = param;
   }
 
@@ -108,14 +108,16 @@ export class ChatSession {
   }
 
   addError(chat_history_id: string, err: Error) {
-    // @ts-ignore
-    const r = this.records.findLast(r => r.chat_history_id === chat_history_id);
-    if (r) { // 存在此对话，则清空此次回复并将错误信息追加上去
-      r.messages.length = 0; // clear
-      r.messageHtml = err.message;
-    } else { // 不存在此次对话，则
-      this.addAnswer(new ChatMessage(chat_history_id, err.message));
-    }
+    this.addAnswer(new ChatMessage(chat_history_id, err.message));
+
+    // // @ts-ignore
+    // const r = this.records.findLast(r => r.chat_history_id === chat_history_id);
+    // if (r) { // 存在此对话，则清空此次回复并将错误信息追加上去
+    //   r.messages.length = 0; // clear
+    //   r.messageHtml = err.message;
+    // } else { // 不存在此次对话，则
+    //   this.addAnswer(new ChatMessage(chat_history_id, err.message));
+    // }
   }
 
   add(record: ChatRecord) {

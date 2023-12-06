@@ -31,7 +31,7 @@ export function parse(
       try {
         const decodeMsg = new TextDecoder('utf-8').decode(value);
         console.debug(decodeMsg)
-        const messages = parseLine(mode, chatId, decodeMsg); // TODO 对于知识库模式，存在出处引用问题(json里是docs的格式，且对话显示也会不同)
+        const messages = parseLine(mode, chatId, decodeMsg);
         onmessage(messages)
       } catch (err) {
         onerr(chatId, err)
