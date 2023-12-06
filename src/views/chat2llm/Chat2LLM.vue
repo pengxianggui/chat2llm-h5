@@ -118,8 +118,13 @@ function fetchAndParse(query?: string) {
       const r = session.value.records.find(r => r.chat_history_id == chatId)
       if (!r) { // 没有此次对话记录，说明有问题，给出错误
         // TODO 因为当有记性时(>0)，后端会发生一个错误. issue: https://github.com/chatchat-space/Langchain-Chatchat/issues/2228
-        // 因此会导致此问题。这里将记性默默改为0, 避免导致后面始终报这个错。这是临时不可取的方案，等这个issue解决了，再进行修改。
-        param.history_count = 0;
+        // 因此会导致此问题, 但是发现，如果调整下history，又恢复了。所以这里将记性默默调整下, 避免导致后面始终报这个错。这是临时不可取的方案，等这个issue解决了，再进行修改。
+        param.history_count = param.history_count ?? 5;
+        if (param.history_count > 5) {
+          param.history_count = param.history_count - 1;
+        } else {
+          param.history_count = param.history_count + 1;
+        }
         session.value.addError(chatId, new Error('抱歉, 请重复一遍，我可能没听清.'));
       }
     },
@@ -181,9 +186,10 @@ onBeforeUnmount(() => {
           max-width: 100%;
         }
 
-        & > .opr {
+        &>.opr {
           display: flex;
-          & > :first-child {
+
+          &> :first-child {
             flex: 1;
           }
         }

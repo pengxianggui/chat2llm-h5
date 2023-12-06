@@ -16,7 +16,10 @@ export class RequestParam {
   temperature: number = 0.7; // 温度
   max_tokens: number = 2000; // 最大token
   prompt_name: string = 'default'; // 向LLM请求前的prompt封装
-  history_count?: number = 3; // 历史对话数量, 前端参数
+  // 历史对话数量, 前端参数, 决定了history里的数量。 
+  // doubt: 很奇怪如果值是3，那么每次3次对话后都会报错, 具体错误查看issue: https://github.com/chatchat-space/Langchain-Chatchat/issues/2228
+  // 但是如果设置4，或者5，甚至更多，就不容易报错。如果更小，也容易报错。
+  history_count?: number = 5;
   history?: Array<{ role: string, content: string }> = []  // 历史对话
 
   // 下面是知识库模式特有的---------------------
