@@ -23,5 +23,9 @@ export const useKnowledgeStore = defineStore('knowledges', () => {
         })
     }
 
-    return { get, knowledges, initKbs }
+    function isEmpty() {
+        return knowledges.value.length == 0
+    }
+
+    return { get, knowledges, initKbs, isEmpty }
 })

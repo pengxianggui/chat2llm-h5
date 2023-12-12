@@ -20,7 +20,7 @@ import KnowledgeList from '../knowledge/KnowledgeList.vue';
 
 function chat2llm(sessionId?: String) {
   if (isEmpty(sessionId)) {
-    sessionId = uuidv4()
+    sessionId = uuidv4().replaceAll('-', '');
   }
   router.push({
     path: `/chat/${sessionId}`,

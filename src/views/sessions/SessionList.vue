@@ -13,6 +13,7 @@
         <li v-for="s in bucket" :key="s.sessionId" @click="toChat(s.sessionId)">
           <!-- TODO 1.改名; 2. 删除 -->
           <h4>{{ s.sessionName }}</h4>
+          <span>{{ s.create_time }}</span>
           <el-tag v-if="s.param.mode == ChatMode.Knowledge" size="small">
             {{ getKbZhName(s.sessionId, s.param.knowledge_base_name) }}
           </el-tag>
@@ -23,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { onBeforeMount, ref } from "vue";
 import { useRouter } from 'vue-router'
 import { ChatLineRound } from "@element-plus/icons-vue";
 import { useChatSessions } from "@/stores/chatSessions.ts";
@@ -32,7 +33,6 @@ import { useKnowledgeStore } from "@/stores/knowledge";
 import { isEmpty } from "lodash";
 
 const router = useRouter();
-
 const store = useChatSessions();
 
 const bucket = ref(store.bucket);

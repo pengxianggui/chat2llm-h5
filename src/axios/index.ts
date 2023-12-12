@@ -1,17 +1,21 @@
 import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 import { ElMessage } from "element-plus";
+import { useToken } from '@/stores/token';
+import { isEmpty } from "lodash";
 
 const $http = axios.create({
     baseURL: '/api',
     timeout: 50000,
     headers: {
-        'X-Token': 'xxxxxxxxxx', // TODO 认证机制设计好，需要兼顾: 终端识别和用户识别
+        'Api-Token': ''
     }
 });
 
 $http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    // 携带身份认证信息，
-    // config.headers['X-Token'] = 
+    const tokenStore = useToken()
+    if (!isEmpty(tokenStore.get())) {
+        config.headers['Api-Token'] = tokenStore.get() // 携带身份认证信息
+    }
     return config;
 }, (error:any) => {
     return Promise.reject(error);

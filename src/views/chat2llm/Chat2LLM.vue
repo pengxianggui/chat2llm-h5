@@ -1,6 +1,9 @@
 <template>
   <div class="body">
     <div class="records">
+      <div class="load-more" v-if="!session.isEmpty()">
+        <el-link :underline="false" type="primary" @click="loadHistory">加载更多</el-link>
+      </div>    
       <template v-if="!session.isEmpty()">
         <div v-for="(r) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
           <span class="avatar">{{ r.avatar }}</span>
@@ -37,10 +40,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, ref, type Ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
-import { ChatMessage, ChatMode, Who, ChatSession } from "./model";
+import { ChatMessage, ChatMode, Who, ChatSession, ChatRecord } from "./model";
 import { Loading } from "@element-plus/icons-vue";
 import { fetchStream } from "./fetchStream";
 import 'highlight.js/styles/atom-one-dark-reasonable.css'
@@ -49,6 +52,8 @@ import ChatInput from "@/components/chatinput/ChatInput.vue";
 import QuotationSource from "./QuotationSource.vue";
 import { INPUT_TIP, REPLAYING } from "@/constant";
 import { useChatSessions } from "@/stores/chatSessions";
+import { saveSession } from "@/api/session";
+import { loadHistories } from "@/api/history";
 
 const props = defineProps({
   sessionId: {
@@ -66,6 +71,11 @@ const sessionStore = useChatSessions();
 const session: Ref<ChatSession> = ref(sessionStore.get(props.sessionId));
 const param = session.value.param;
 let ctrl: AbortController; // 控制sse停止
+
+// 进入时
+onMounted(() => {
+  loadHistory(null, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
+})
 
 const blankTip = computed(() => {
   const mode = session.value.mode;
@@ -96,6 +106,7 @@ function ask() {
   fetchAndParse(query);
 }
 
+// 主动终止响应
 function abort() {
   if (ctrl != undefined) {
     ctrl.abort();
@@ -105,6 +116,7 @@ function abort() {
 // 发起调用并解析
 async function fetchAndParse(query?: string) {
   ctrl = await fetchStream(session.value.mode, {
+    session_id: session.value.sessionId,
     ...param,
     query
   }, {
@@ -154,11 +166,42 @@ function clearQuery() {
   param.query = '';
 }
 
+/**
+ * 加载指定记录的前num轮对话记录
+ * @param chatId 参考的记录id
+ * @param num    基于参考的记录id的前num条记录
+ */
+function loadHistory(chatId: string | null, num: number) {
+  loadHistories(session.value.sessionId, chatId, num).then(({ data = [] }) => {
+    // 每个item是一轮对话，即包含一问一答
+    data.forEach(item => {
+      const { id, query, response, docs = [], create_time } = item
+      const a: ChatRecord = new ChatRecord(Who.robot, id)
+      a.doc = docs.map(doc => new ChatMessage(id, doc))
+      a.messageHtml = response
+      a.create_time = create_time
+      session.value.unshift(a)
+
+      const q: ChatRecord = new ChatRecord(Who.you, id)
+      q.messageHtml = query
+      q.create_time = create_time
+      session.value.unshift(q)
+    })
+
+  })
+}
+
 onBeforeUnmount(() => {
   if (session.value.isEmpty()) {  // 如果会话为空, 则移除
     sessionStore.remove(props.sessionId)
-  } else { // 如果会话不为空，则调后端API持久化
-    // TODO 持久化会话
+  } else {
+    // 持久化会话
+    saveSession(session.value).then(({ data: result}) => {
+      if (result == false) {
+        // TODO tip
+        return
+      }
+    })
   }
 });
 </script>
@@ -173,6 +216,10 @@ onBeforeUnmount(() => {
   &>.records {
     flex: 1;
     overflow: hidden auto;
+  
+    & > .load-more {
+      text-align: center;
+    }
 
     $avatarSide: 2rem;
 

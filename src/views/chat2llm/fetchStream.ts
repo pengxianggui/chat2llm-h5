@@ -23,7 +23,7 @@ interface FetchStreamOption {
  * @param inputOnError
  * @returns AbortController
  */
-export function fetchStream(mode: ChatMode, param: RequestParam, {
+export function fetchStream(mode: ChatMode, param: any, {
   onbeforeopen: inputOnBeforeOpen, onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
 }: FetchStreamOption): Promise<AbortController> {
   const onbeforeopen = inputOnBeforeOpen ?? defaultOnBeforeOpen;

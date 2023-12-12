@@ -5,7 +5,7 @@ export enum Who {
 }
 
 export enum ChatMode {
-  LLM, Knowledge, SearchEngine, Agent
+  LLM = 'LLM', Knowledge = 'Knowledge', SearchEngine = 'SearchEngine', Agent = 'Agent'
 }
 
 export class RequestParam {
@@ -60,6 +60,7 @@ export class ChatRecord {
   doc?: Array<ChatMessage> = []; // 引用， 知识库模式下，robot的记录存在出处引用
   chat_history_id: string; // 对话id
   messageHtml: string = ''; // 此次【对话记录】渲染的html内容
+  create_time?: string;
 
   constructor(who: Who, chat_history_id: string) {
     this.who = who;
@@ -74,6 +75,7 @@ export class ChatSession {
   mode: ChatMode;
   param: RequestParam;
   records: Array<ChatRecord> = [];
+  create_time?: string;
 
   constructor(sessionId: string, mode: ChatMode, param: RequestParam) {
     this.sessionId = sessionId;
@@ -87,7 +89,7 @@ export class ChatSession {
     const record = new ChatRecord(Who.you, chat_history_id);
     record.messages.push(message);
     record.messageHtml = message.text;
-    this.add(record);
+    this.push(record);
   }
 
   addAnswer(message: ChatMessage) {
@@ -95,7 +97,7 @@ export class ChatSession {
     let r: ChatRecord | undefined = this.records.findLast(r => r.chat_history_id === chat_history_id);
     if (!r) {
       r = new ChatRecord(Who.robot, chat_history_id);
-      this.add(r);
+      this.push(r);
     }
 
     if (message.isDoc === false) {
@@ -120,13 +122,19 @@ export class ChatSession {
     // }
   }
 
-  add(record: ChatRecord) {
+  // 加到结尾
+  push(record: ChatRecord) {
     if (this.records.length === 0) {
       // 初始化sessionName
       const { messageHtml = '对话' } = record;
       this.sessionName = messageHtml.substring(0, 30); // 截取前7位作为sessionName
     }
     this.records.push(record);
+  }
+
+  // 加到开头
+  unshift(record: ChatRecord) {
+    this.records.unshift(record);
   }
 
   // 填充历史记录到param.history里， 根据param.history_count，取records的最近几条

@@ -11,16 +11,16 @@
             </template>
             <!-- form -->
             <el-form :model="chatParam" label-width="auto" label-suffix=":">
-                <el-form-item prop="mode" label="模式">
-                    <h4>{{ chatParam.mode == ChatMode.LLM ? '非知识库模式' : '知识库模式' }}</h4>
+                <el-form-item label="模式">
+                    <h4>{{ session.mode == ChatMode.LLM ? '非知识库模式' : '知识库模式' }}</h4>
                 </el-form-item>
                 <el-form-item prop="temperature" label="记性">
                     <el-slider v-model="chatParam.history_count" :min="0" :max="10" />
                 </el-form-item>
-                <el-form-item prop="temperature" label="温度" v-if="chatParam.mode == ChatMode.LLM">
+                <el-form-item prop="temperature" label="温度" v-if="session.mode == ChatMode.LLM">
                     <el-slider v-model="chatParam.temperature" :min="0" :max="1" :step="0.01" />
                 </el-form-item>
-                <div  v-if="chatParam.mode == ChatMode.Knowledge">
+                <div  v-if="session.mode == ChatMode.Knowledge">
                     <el-divider content-position="left">知识库相关</el-divider>
                     <el-form-item prop="knowledge_base_name" label="知识库名">
                         <h4>{{ chatParam.knowledge_base_name }}</h4>

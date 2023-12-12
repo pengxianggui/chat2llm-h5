@@ -25,7 +25,7 @@ const knowledges = computed(() => {
 
 function toChat(knowledgeName: string) {
     // 新开一个chat session
-    const sessionId = uuidv4();
+    const sessionId = uuidv4().replaceAll('-', '');
     router.push({
         path: `/chat/${sessionId}`,
         query: {
