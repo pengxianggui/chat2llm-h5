@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/home/HomeView.vue'
+import ErrorLayout from '@/views/err/ErrorLayout.vue'
 import Page401 from '@/views/err/Page401.vue'
 import Layout from "@/views/Layout.vue";
 import Chat2LLM from "@/views/chat2llm/Chat2LLM.vue";
@@ -61,9 +62,17 @@ const router = createRouter({
       ]
     },
     {
-      path: '/401',
-      name: '401',
-      component: Page401,
+      path: '/',
+      name: 'error',
+      component: ErrorLayout,
+      children: [
+        {
+          path: '/401',
+          name: '401',
+          component: Page401,
+          props: (route) => { return {message: route.query.message }}
+        }
+      ]
     }
   ]
 })
@@ -76,8 +85,12 @@ router.beforeEach(async (to, from) => {
   const { token: tokenInPath } = to.query
   const token = isEmpty(tokenInPath) ? tokenInStorage : tokenInPath
 
-  if (isEmpty(token) && to.name != '401') {
-    return '/401'
+  if (isEmpty(token)) {
+    if (to.name != '401') {
+      return '/401'
+    } else {
+      return true;
+    }
   }
   // @ts-ignore
   tokenStore.set(token) // 将token存到store

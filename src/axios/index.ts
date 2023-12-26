@@ -2,6 +2,7 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from "axio
 import { ElMessage } from "element-plus";
 import { useToken } from '@/stores/token';
 import { isEmpty } from "lodash";
+import router from "@/router";
 
 const $http = axios.create({
     baseURL: '/api',
@@ -30,6 +31,12 @@ $http.interceptors.response.use((response: AxiosResponse) => {
     ElMessage.error(msg);
     return Promise.reject(new Error(msg));
 }, (err: any) => {
+    const {response: {status, data}} = err
+    if (status == 401) {
+        const tokenStore = useToken()
+        tokenStore.clear()
+        router.push({name: '401', query: { message: data }})
+    }
     return Promise.reject(err);
 })
 

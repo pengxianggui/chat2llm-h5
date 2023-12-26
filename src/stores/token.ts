@@ -11,9 +11,18 @@ export const useToken = defineStore('counter', () => {
     }
 
     function get() {
-        return isEmpty(token.value) ? sessionStorage.getItem("Api-Token") : token.value
+        const t = isEmpty(token.value) ? sessionStorage.getItem("Api-Token") : token.value
+        if (t == 'null') {
+            return null
+        }
+        return t
+    }
+
+    function clear() {
+        token.value = ''
+        sessionStorage.removeItem("Api-Token")
     }
   
-    return { set, get }
+    return { set, get, clear }
   })
   
