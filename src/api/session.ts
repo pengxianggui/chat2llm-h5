@@ -21,7 +21,7 @@ export function saveSession(session: ChatSession): AxiosPromise<Boolean> {
         session_name: session.sessionName,
         mode: session.mode,
         param: {
-            query: session.param.query,
+            query: null,
             model_name: session.param.model_name,
             stream: session.param.stream,
             temperature: session.param.temperature,

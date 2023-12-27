@@ -1,21 +1,32 @@
 <template>
-    <div class="knowledges">
-        <el-card class="knowledge" v-for="kb in knowledges" :key="kb.kb_name" shadow="always" @click="toChat(kb.kb_name)">
-            <template #header>
-                <h4>
-                    <span>📒</span>&nbsp;
-                    <span v-ellipsis="1">{{ kb.kb_zh_name }}</span>
-                </h4>
-            </template>
-            <span  v-ellipsis="3">{{ kb.kb_info }}</span>
+    <div id="knowledges" class="knowledges">
+        <el-card class="knowledge" v-for="(kb, index) in knowledges" :key="kb.kb_name" shadow="always"
+            :style="`background:` + bgColorArr[index % (bgColorArr.length)]" 
+            @click="toChat(kb.kb_name)">
+            <!-- <template #header> -->
+            <h3>
+                <!-- <span>📒</span>&nbsp; -->
+                <span v-ellipsis="1">{{ kb.kb_zh_name }}</span>
+            </h3>
+            <!-- </template> -->
+            <!-- <span  v-ellipsis="1">{{ kb.kb_info }}</span> -->
+            <span>去体验 ></span>
         </el-card>
+        <svg-icon value="empty" v-if="knowledges.length == 0" size="100%"></svg-icon>
     </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import router from "@/router";
 import { useKnowledgeStore } from '@/stores/knowledge.ts'
+
+const bgColorArr = ref<Array<String>>([
+                        'linear-gradient(45deg, #7fe9fe, #23bdff)',
+                        'linear-gradient(45deg, #fac1cf, #fe89ad)',
+                        'linear-gradient(45deg, #cbfaa7, #5ffba9)',
+                        'linear-gradient(45deg, #d6ceff, #afaaff)',
+                        'linear-gradient(45deg, #fffdd9, #fffdd9)'])
 
 const kbStore = useKnowledgeStore();
 
@@ -33,9 +44,9 @@ function toChat(knowledgeName: string) {
         }
     })
 }
+
 </script>
 <style scoped lang="scss">
-$color-array: rgb(223, 180, 180), rgb(195, 195, 234), rgb(194, 230, 194), rgb(209, 209, 173), rgb(242, 187, 242);
 
 .knowledges {
     display: grid;
@@ -43,23 +54,15 @@ $color-array: rgb(223, 180, 180), rgb(195, 195, 234), rgb(194, 230, 194), rgb(20
     grid-template-columns: 1fr 1fr;
     grid-gap: 0.5rem;
 
-    @each $color in $color-array {
-        $i: index($color-array, $color);
-        .knowledge:nth-child(#{$i}) {
-            background-color: $color;
-        }
-    }
-
-
     .knowledge {
         // height: 4rem;
         cursor: pointer;
         border-radius: 1rem;
 
-        :deep(.el-card__header) {
-            padding: 0.5rem 1rem;
+        // :deep(.el-card__header) {
+        //     padding: 0.5rem 1rem;
 
-            h4 {
+            h3 {
                 display: flex;
                 align-items: center;
                 word-break: keep-all;
@@ -73,7 +76,7 @@ $color-array: rgb(223, 180, 180), rgb(195, 195, 234), rgb(194, 230, 194), rgb(20
                     font-weight: bold;
                 }
             }
-        }
+        // }
 
         :deep(.el-card__body) {
             padding: 1rem;

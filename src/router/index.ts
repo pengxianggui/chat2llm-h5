@@ -25,7 +25,7 @@ const router = createRouter({
           name: 'home',
           component: HomeView,
           meta: {
-            title: '首页',
+            title: '火星智呼',
             showBack: false,
             showSetting: false
           }
@@ -107,20 +107,20 @@ router.beforeEach(async (to, from) => {
 
   // 如果前往对话界面
   if (to.name == 'chat') {
-    const { params: { sessionId }, query: { knowledgeName } } = to;
-    if (isEmpty(sessionId)) {
-      return { name: 'home' }; // 回主页
-    }
-    // @ts-ignore
-    let session: ChatSession | any = sessionStore.get(sessionId);
-    if (isEmpty(session)) { // 如果会话不存在，则新建会话
-      const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
-      // @ts-ignore
-      const param = new RequestParam(chatMode, '', knowledgeName);
-      // @ts-ignore
-      session = new ChatSession(sessionId, chatMode, param);
-      sessionStore.put(session);
-    }
+    // const { params: { sessionId }, query: { knowledgeName, query = '' } } = to;
+    // if (isEmpty(sessionId)) {
+    //   return { name: 'home' }; // 回主页
+    // }
+    // // @ts-ignore
+    // let session: ChatSession | any = sessionStore.get(sessionId);
+    // if (isEmpty(session)) { // 如果会话不存在，则新建一个会话
+    //   const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
+    //   // @ts-ignore
+    //   const param = new RequestParam(chatMode, query, knowledgeName);
+    //   // @ts-ignore
+    //   session = new ChatSession(sessionId, chatMode, param);
+    //   sessionStore.put(session);
+    // }
   }
 
   return true

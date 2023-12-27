@@ -6,7 +6,7 @@
       </div>    
       <template v-if="!session.isEmpty()">
         <div v-for="(r) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
-          <span class="avatar">{{ r.avatar }}</span>
+          <!-- <span class="avatar">{{ r.avatar }}</span> -->
           <div class="message">
             <div v-html="r.messageHtml" class="text"></div>
             <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot && !replying">
@@ -38,9 +38,49 @@
       :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask" @abort="abort"></ChatInput>
   </div>
 </template>
-
+<!-- 由于在setup组合式API中没有onBeforeRouteEnter, 因此当前组件采用两种结合的方式。
+     注意: 两个script数据并不相通。选项式script里只做路由进入、离开时对store中session的添加或移除的动作
+-->
+<script lang="ts">
+import { RequestParam } from "@/views/chat2llm/model";
+export default {
+  beforeRouteEnter(to: any, from: any) {
+    const sessionStore = useChatSessions();
+    const { params: { sessionId }, query: { knowledgeName, query = '' } } = to;
+    if (isEmpty(sessionId)) {
+      return { name: 'home' }; // 回主页
+    }
+    // @ts-ignore
+    let session: ChatSession | any = sessionStore.get(sessionId);
+    if (isEmpty(session)) { // 如果会话不存在，则新建一个会话
+      const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
+      // @ts-ignore
+      const param = new RequestParam(chatMode, query, knowledgeName);
+      // @ts-ignore
+      session = new ChatSession(sessionId, chatMode, param);
+      sessionStore.put(session);
+    }
+  },
+  beforeRouteLeave(to: any, from: any) {
+    const sessionStore = useChatSessions();
+    const { params: { sessionId }} = from;
+    let session: ChatSession | any = sessionStore.get(sessionId);
+    if (session.isEmpty()) {  // 如果会话为空, 则移除
+      sessionStore.remove(sessionId)
+    } else {
+      // 持久化会话
+      saveSession(session).then(({ data: result}) => {
+        if (result == false) {
+          // TODO tip
+          return
+        }
+      })
+    }
+  }
+}
+</script>
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref, type Ref } from "vue";
+import { computed, onMounted, ref, type Ref } from "vue";
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import { ChatMessage, ChatMode, Who, ChatSession, ChatRecord } from "./model";
@@ -58,7 +98,11 @@ import { loadHistories } from "@/api/history";
 const props = defineProps({
   sessionId: {
     type: String,
-    require: true
+    required: true
+  },
+  query: {
+    type: String,
+    required: false
   }
 })
 
@@ -74,7 +118,11 @@ let ctrl: AbortController; // 控制sse停止
 
 // 进入时
 onMounted(() => {
-  loadHistory(null, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
+  const chatRecord = session.value.getEarliestRecord()
+  loadHistory(chatRecord?.chat_history_id, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
+  if (!isEmpty(param.query)) { // 进入时带了内容，则直接发问
+    ask()
+  }
 })
 
 const blankTip = computed(() => {
@@ -171,7 +219,7 @@ function clearQuery() {
  * @param chatId 参考的记录id
  * @param num    基于参考的记录id的前num条记录
  */
-function loadHistory(chatId: string | null, num: number) {
+function loadHistory(chatId: string | null | undefined, num: number) {
   loadHistories(session.value.sessionId, chatId, num).then(({ data = [] }) => {
     // 每个item是一轮对话，即包含一问一答
     data.forEach(item => {
@@ -190,20 +238,6 @@ function loadHistory(chatId: string | null, num: number) {
 
   })
 }
-
-onBeforeUnmount(() => {
-  if (session.value.isEmpty()) {  // 如果会话为空, 则移除
-    sessionStore.remove(props.sessionId)
-  } else {
-    // 持久化会话
-    saveSession(session.value).then(({ data: result}) => {
-      if (result == false) {
-        // TODO tip
-        return
-      }
-    })
-  }
-});
 </script>
 
 <style scoped lang="scss">
@@ -221,25 +255,25 @@ onBeforeUnmount(() => {
       text-align: center;
     }
 
-    $avatarSide: 2rem;
+    // $avatarSide: 2rem;
 
     &>.record {
       display: flex;
       align-items: flex-start;
       overflow: hidden;
-      padding: 0.6rem;
+      padding: 0.8rem;
 
       .avatar {
         display: inline-block;
         text-align: center;
-        width: $avatarSide;
-        height: $avatarSide;
+        // width: $avatarSide;
+        // height: $avatarSide;
       }
 
       .message {
         // flex: 1;
-        border-radius: 0.6rem;
-        padding: 0.5rem;
+        border-radius: 1rem;
+        padding: 0.8rem;
         overflow: auto;
 
         &>.text {
@@ -265,10 +299,12 @@ onBeforeUnmount(() => {
       flex-direction: row-reverse;
 
       .message {
-        margin-left: $avatarSide;
+        // margin-left: $avatarSide;
         margin-right: 0.2rem;
         text-align: right;
-        background-color: #94ea69;
+        color: #fff;
+        background-color: #0098ff;
+        border-bottom-right-radius: 0;
 
         &>.text {
           display: inline-block;
@@ -281,9 +317,11 @@ onBeforeUnmount(() => {
       text-align: left;
 
       .message {
-        margin-left: 0.2rem;
-        margin-right: $avatarSide;
+        // margin-left: 0.2rem;
+        // margin-right: $avatarSide;
         border: 1px solid #eaeaea;
+        background-color: #fff;
+        border-bottom-left-radius: 0;
 
         &>.text {
           display: inline-block;

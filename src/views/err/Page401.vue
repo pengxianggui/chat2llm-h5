@@ -1,6 +1,6 @@
 <template>
     <div class="page-401">
-        <svg-icon icon-class="unauthorize1" style="width: 100%; height: 80%;"></svg-icon>
+        <svg-icon value="unauthorize1" style="width: 100%; height: 80%;"></svg-icon>
         <el-text type="info">{{ message }}</el-text>
     </div>
 </template>

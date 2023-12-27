@@ -127,7 +127,7 @@ export class ChatSession {
     if (this.records.length === 0) {
       // 初始化sessionName
       const { messageHtml = '对话' } = record;
-      this.sessionName = messageHtml.substring(0, 30); // 截取前7位作为sessionName
+      this.sessionName = messageHtml.substring(0, 20); // 截取前7位作为sessionName
     }
     this.records.push(record);
   }
@@ -157,6 +157,13 @@ export class ChatSession {
       })
     }
     this.param.history = history
+  }
+
+  /**
+   * 获取当前会话中缓存的最早的对话。若不存在则返回null
+   */
+  getEarliestRecord() {
+    return this.isEmpty() ? null : this.records[0]
   }
 
   isEmpty() {

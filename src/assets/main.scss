@@ -3,7 +3,8 @@
 
 #app, main {
   font-weight: normal;
-  height: 100vh;
+  height: 100vh;  
+  background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2)), url('./background.jpg') no-repeat 0% 20%/ cover;
 }
 
 a,

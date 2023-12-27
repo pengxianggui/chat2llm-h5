@@ -7,7 +7,7 @@ import type { AxiosPromise } from "axios";
  * @param chatId 为null则表示拉取最新的
  * @param num 
  */
-export function loadHistories(sessionId: string, chatId: string | null, num = 3): AxiosPromise<[]> {
+export function loadHistories(sessionId: string, chatId: string | null | undefined, num = 3): AxiosPromise<[]> {
     return $http.post('/history/latest', {
         session_id: sessionId, 
         chat_id: chatId,

@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 const props = defineProps({
-  iconClass: { // 图标名称与assets/icon/svg下使用的文件名一致
+  value: { // 图标名称与assets/icon/svg下使用的文件名一致
     type: String,
     required: true
   },
@@ -26,7 +26,7 @@ const props = defineProps({
   }
 });
 const iconName = computed(() => {
-  return `#icon-${props.iconClass}`;
+  return `#icon-${props.value}`;
 });
 const svgClass = computed(() => {
   if (props.className) {

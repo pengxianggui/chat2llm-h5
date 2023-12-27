@@ -6,7 +6,7 @@
         <component :is="Component"></component>
       </transition>
     </router-view>
-    <Footer class="footer"></Footer>
+    <!-- <Footer class="footer"></Footer> -->
   </main>
 </template>
 
@@ -22,18 +22,17 @@ main {
   flex-direction: column;
   position: relative;
 
-  .header {
+  & > .header {
     height: 3rem;
     box-shadow: 0 0 6PX rgba(0, 0, 0, 0.1);
     z-index: 1;
   }
 
-  .body {
+  & > .body {
     flex: 1;
-    background-color: #ffffff;
   }
 
-  .footer {
+  & > .footer {
 
   }
 }

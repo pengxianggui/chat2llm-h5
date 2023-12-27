@@ -1,9 +1,9 @@
 <template>
   <div class="sessions">
     <el-icon size="1.4rem" @click="visible = true">
-      <ChatLineRound />
+      <svg-icon value="list"></svg-icon>
     </el-icon>
-    <el-drawer v-model="visible" direction="ltr" size="80%" class="drawer" :append-to-body="false"
+    <el-drawer v-model="visible" direction="rtl" size="80%" class="drawer" :append-to-body="false"
       :show-close="true">
       <template #header>
         <div>对话历史</div>
@@ -24,9 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref } from "vue";
+import { ref } from "vue";
 import { useRouter } from 'vue-router'
-import { ChatLineRound } from "@element-plus/icons-vue";
 import { useChatSessions } from "@/stores/chatSessions.ts";
 import { ChatMode } from "@/views/chat2llm/model";
 import { useKnowledgeStore } from "@/stores/knowledge";

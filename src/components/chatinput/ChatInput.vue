@@ -5,7 +5,9 @@
       :autosize="{ maxRows: 5 }">
     </el-input>
     <el-button class="send-btn" :class="{ 'disabled': disabled || !inputValue }" round type="info" @click="send"
-      :disabled="disabled || !inputValue" v-if="!replying">发送</el-button>
+      :disabled="disabled || !inputValue" v-if="!replying">
+      <svg-icon value="send" size="1.5rem"></svg-icon>
+    </el-button>
     <el-button class="send-btn" round type="danger" @click="$emit('abort')" v-else>停止响应</el-button>
   </div>
 </template>
@@ -56,28 +58,32 @@ function send() {
 .input-box {
   display: flex;
   gap: 1rem;
-  align-items: center;
-  padding: 0.3rem 1rem;
-  background-color: #fff;
+  align-items: stretch;
+  padding: 1rem 1rem;
+  // background-color: #fff;
   // border-top: 1PX solid rgb(214, 214, 214);
-  box-shadow: 0 -1PX 6PX rgba(0, 0, 0, 0.1);
+  // box-shadow: 0 -1PX 6PX rgba(0, 0, 0, 0.1);
 
   .input {
     flex: 1;
     font-size: 1rem;
-    border-radius: 2rem;
+    border-radius: 1rem;
     border: 1PX solid #c7c7c7;
     padding: 0 1rem;
+    background-color: white;
 
     // :focus-within 表示此元素或子元素被focus时, 样式生效
-    &:focus-within {
-      border: 1PX solid #585858;
-    }
+    // &:focus-within {
+      // border: 1PX solid #585858;
+    // }
 
     :deep(.el-textarea__inner) {
       box-shadow: none;
       background: transparent;
       resize: none;
+      height: 2.5rem;
+      line-height: 2.5rem;
+      font-size: 1.2rem;
     }
 
     :deep(.el-textarea__inner::-webkit-scrollbar) {
@@ -86,16 +92,18 @@ function send() {
     }
 
     :deep(.el-textarea__inner::placeholder) {
-      color: #d1d1d1;
+      color: #c4d5ea;
     }
   }
 
   .send-btn {
-    background-color: rgb(59, 59, 59);
+    color: #c4d5ea; 
+    background-color: white;
     border: none;
+    height: auto;
   }
   .send-btn.disabled {
-    background-color: #b2b2b2;
+    background-color: #ededed;
   }
 }
 </style>
