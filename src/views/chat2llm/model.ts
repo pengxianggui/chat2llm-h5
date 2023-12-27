@@ -42,11 +42,11 @@ export class RequestParam {
 
 
 export class ChatMessage {
-  chat_history_id: string;
+  chat_history_id: string | null;
   text: string = '';
   isDoc?: boolean = false; // 若是引用消息，则为true, 否则为false
 
-  constructor(chat_history_id: string, text: string, isDoc?: boolean) {
+  constructor(chat_history_id: string | null, text: string, isDoc?: boolean) {
     this.chat_history_id = chat_history_id;
     this.text = text;
     this.isDoc = isDoc ?? false
@@ -57,15 +57,39 @@ export class ChatRecord {
   who: Who; // 对话角色
   avatar: string; // 头像
   messages: Array<ChatMessage> = []; // 对话记录
-  doc?: Array<ChatMessage> = []; // 引用， 知识库模式下，robot的记录存在出处引用
+  doc: Array<ChatMessage> = []; // 引用， 知识库模式下，robot的记录存在出处引用
   chat_history_id: string; // 对话id
   messageHtml: string = ''; // 此次【对话记录】渲染的html内容
   create_time?: string;
+  thinking?: boolean = false;
 
   constructor(who: Who, chat_history_id: string) {
     this.who = who;
     this.avatar = (who === Who.robot ? '🤖' : '🧒🏻');
     this.chat_history_id = chat_history_id;
+    this.doc = []
+  }
+
+  // 清除此次对话的内容
+  clear() {
+    this.messages.length = 0
+    this.doc.length = 0
+    this.messageHtml = ''
+  }
+
+  isEmpty() {
+    return !this.messageHtml
+  }
+
+  setError(err: Error) {
+    console.log(err)
+    this.clear()
+    const message = new ChatMessage(this.chat_history_id, err.message)
+    this.messages.push(message);
+    const messageText = this.messages.map(msg => msg.text).join("");
+    this.messageHtml = markdown.render(messageText);
+    console.log(this)
+    console.log(this.messageHtml)
   }
 }
 
@@ -164,6 +188,38 @@ export class ChatSession {
    */
   getEarliestRecord() {
     return this.isEmpty() ? null : this.records[0]
+  }
+
+  /**
+   * 获取当前会话中最晚的记录。若不存在则返回null。
+   * @param n 表示最后的第几个记录, 默认为1(倒数第一个), 如果是2表示倒数第二个
+   */
+  getLatestRecord(n: number = 1) {
+    if (n > this.records.length) {
+      console.error('n超过数组长度')
+      return null;
+    }
+    return this.isEmpty() ? null : this.records[this.records.length - n]
+  }
+
+  getRecord(chat_history_id: string) {
+    return this.isEmpty() ? null : this.records.find(r => r.chat_history_id == chat_history_id)
+  }
+
+  /**
+   * 删除指定记录
+   * @param record 
+   * @returns 
+   */
+  removeRecord(record: ChatRecord) {
+    if (this.isEmpty()) {
+      return true
+    }
+    const index = this.records.findIndex(r => r.chat_history_id == record.chat_history_id)
+    if (index == -1) {
+      return false
+    }
+    this.records.splice(index, 1)
   }
 
   isEmpty() {

@@ -1,15 +1,14 @@
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
-import { ChatMessage, ChatMode, RequestParam } from "./model";
+import { ChatMessage, ChatMode, ChatRecord, RequestParam } from "./model";
 import { parse } from "./parse";
 
 export const EventStreamContentType = 'text/event-stream';
 
 interface FetchStreamOption {
-  onbeforeopen?: (chatId: string) => void;
-  onopen?: (chatId: string, res: Response) => void;
+  onopen?: (res: Response) => void;
   onmessage: (msgs: ChatMessage[]) => void;
-  ondone: (chatId: string) => void;
-  onerr?: (chatId: string, err: any) => void;
+  ondone: () => void;
+  onerr?: (err: any) => void;
 }
 
 /**
@@ -24,19 +23,14 @@ interface FetchStreamOption {
  * @returns AbortController
  */
 export function fetchStream(mode: ChatMode, param: any, {
-  onbeforeopen: inputOnBeforeOpen, onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
+  onopen: inputOnOpen, onmessage, ondone, onerr: inputOnError
 }: FetchStreamOption): Promise<AbortController> {
-  const onbeforeopen = inputOnBeforeOpen ?? defaultOnBeforeOpen;
   const onopen = inputOnOpen ?? defaultOnOpen;
   const onerr = inputOnError ?? defaultOnErr;
-
-  const chatId = uuidv4();
 
   async function create(): Promise<AbortController> {
     const ctrl = new AbortController();
     try {
-      onbeforeopen(chatId);
-
       // 根据param.mode不同，给不同的path路径
       let path = '/chat/chat';
       if (mode == ChatMode.LLM) {
@@ -58,10 +52,10 @@ export function fetchStream(mode: ChatMode, param: any, {
         signal: ctrl.signal
       })
 
-      onopen(chatId, response);
-      parse(mode, chatId, response, onmessage, ondone, onerr)
+      onopen(response);
+      parse(mode, response, onmessage, ondone, onerr)
     } catch (err) {
-      onerr(chatId, err)
+      onerr(err)
     }
     return ctrl;
   }
@@ -69,17 +63,13 @@ export function fetchStream(mode: ChatMode, param: any, {
   return create();
 }
 
-function defaultOnBeforeOpen(chatId: string) {
-  // ..
-}
-
-function defaultOnOpen(chatId: string, response: Response) {
+function defaultOnOpen(response: Response) {
   const contentType = response.headers.get('content-type');
   if (!contentType?.startsWith(EventStreamContentType)) {
     throw new Error(`Expected content-type to be ${EventStreamContentType}, Actual: ${contentType}`);
   }
 }
 
-function defaultOnErr(chatId: string, err: any) {
+function defaultOnErr(err: any) {
   console.log(err)
 }

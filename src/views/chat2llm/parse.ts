@@ -12,18 +12,17 @@ import { isEmpty } from 'lodash';
  */
 export function parse(
   mode: ChatMode,
-  chatId: string,
   res: Response,
   onmessage: (msgs: ChatMessage[]) => void,
-  ondone: (chatId: string) => void,
-  onerr: (chatId: string, err: any) => void
+  ondone: () => void,
+  onerr: (err: any) => void
 ) {
   // @ts-ignore
   try {
     const reader = res.body.getReader();
     const processData = (result) => {
       if (result.done) {
-        ondone(chatId);
+        ondone();
         return;
       }
 
@@ -31,10 +30,10 @@ export function parse(
       try {
         const decodeMsg = new TextDecoder('utf-8').decode(value);
         console.debug(decodeMsg)
-        const messages = parseLine(mode, chatId, decodeMsg);
+        const messages = parseLine(mode, decodeMsg);
         onmessage(messages)
       } catch (err) {
-        onerr(chatId, err)
+        onerr(err)
       }
 
       // 读取下一个片段，重复处理步骤
@@ -42,10 +41,10 @@ export function parse(
     };
 
     reader.read().then(processData).catch(err => {
-      onerr(chatId, err);
+      onerr(err);
     });
   } catch (err) {
-    onerr(chatId, new Error('发生错误, 请重试:' + err.message))
+    onerr(new Error('发生错误, 请重试:' + err.message))
   }
 }
 
@@ -56,7 +55,7 @@ export function parse(
  * 但实际发现存在一定概率出现这样的格式: {"text":""}{"text":""}， 或者{"answer": ""}{"answer": ""}
  * @param decodeMsg
  */
-function parseLine(mode: ChatMode, chatId: string, decodeMsg: string): Array<ChatMessage> {
+function parseLine(mode: ChatMode, decodeMsg: string): Array<ChatMessage> {
   let messages;
   try {
     const msg = JSON.parse(decodeMsg)
@@ -69,24 +68,23 @@ function parseLine(mode: ChatMode, chatId: string, decodeMsg: string): Array<Cha
 
   return messages.map((msg: { text: string; answer: string; docs: Array<string>; }) => {
     let text!: string; // 赋值断言
-    const chat_history_id: string = chatId;
     if (mode == ChatMode.Knowledge) {
-      return buildMessageForKnowledge(chatId, msg);
+      return buildMessageForKnowledge(msg);
       // } else if (mode == ChatMode.SearchEngine) {
 
       // } else if (mode == ChatMode.Agent) {
     } else {
       text = msg.text;
-      return new ChatMessage(chat_history_id, text)
+      return new ChatMessage(null, text)
     }
-  }).filter(msg => !isEmpty(msg.text))
+  }).filter((msg: { text: string; answer: string; docs: Array<string>; }) => !isEmpty(msg.text))
 }
 
-function buildMessageForKnowledge(chatId: string, msg: { answer: string; docs: Array<string>; }) {
+function buildMessageForKnowledge(msg: { answer: string; docs: Array<string>; }) {
   if (Object.prototype.hasOwnProperty.call(msg, 'docs')) {
-    return new ChatMessage(chatId, msg.docs.join('\n'), true);
+    return new ChatMessage(null, msg.docs.join('\n'), true);
   } else if (Object.prototype.hasOwnProperty.call(msg, 'answer')) {
-    return new ChatMessage(chatId, msg.answer);
+    return new ChatMessage(null, msg.answer);
   }
-  return new ChatMessage(chatId, JSON.stringify(msg));
+  return new ChatMessage(null, JSON.stringify(msg));
 }
