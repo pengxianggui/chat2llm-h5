@@ -5,10 +5,10 @@ export class RecommendQustion {
     // 问题内容
     query: string = '';
     // 知识库
-    knowledgeName?: string;
+    kb_name?: string;
 
     constructor(query: string, knowledgeName ?: string) {
         this.query = query
-        this.knowledgeName = knowledgeName
+        this.kb_name = knowledgeName
     }
 }

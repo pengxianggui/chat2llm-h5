@@ -12,7 +12,7 @@
         <div class="content">
             <ul v-if="recommendQuestion.length > 0">
                 <li v-for="(q, index) in recommendQuestion" :key="index">
-                    <el-link @click="toChat(q.query, q.knowledgeName)">{{ q.query }}</el-link>
+                    <el-link @click="toChat(q.query, q.kb_name)">{{ q.query }}</el-link>
                 </li>
             </ul>
             <svg-icon value="empty" v-else size="100%"></svg-icon>

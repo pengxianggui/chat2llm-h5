@@ -117,9 +117,9 @@ const param = session.value.param;
 let ctrl: AbortController; // 控制sse停止
 
 // 进入时
-onMounted(() => {
+onMounted(async () => {
   const chatRecord = session.value.getEarliestRecord()
-  loadHistory(chatRecord?.chat_history_id, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
+  await loadHistory(chatRecord?.chat_history_id, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
   if (!isEmpty(param.query)) { // 进入时带了内容，则直接发问
     ask()
   }
@@ -219,23 +219,22 @@ function clearQuery() {
  * @param chatId 参考的记录id
  * @param num    基于参考的记录id的前num条记录
  */
-function loadHistory(chatId: string | null | undefined, num: number) {
-  loadHistories(session.value.sessionId, chatId, num).then(({ data = [] }) => {
-    // 每个item是一轮对话，即包含一问一答
-    data.forEach(item => {
-      const { id, query, response, docs = [], create_time } = item
-      const a: ChatRecord = new ChatRecord(Who.robot, id)
-      a.doc = docs.map(doc => new ChatMessage(id, doc))
-      a.messageHtml = response
-      a.create_time = create_time
-      session.value.unshift(a)
+async function loadHistory(chatId: string | null | undefined, num: number) {
+  const res = await loadHistories(session.value.sessionId, chatId, num)
+  const data = res.data
+  // 每个item是一轮对话，即包含一问一答
+  data.forEach(item => {
+    const { id, query, response, docs = [], create_time } = item
+    const a: ChatRecord = new ChatRecord(Who.robot, id)
+    a.doc = docs.map(doc => new ChatMessage(id, doc))
+    a.messageHtml = response
+    a.create_time = create_time
+    session.value.unshift(a)
 
-      const q: ChatRecord = new ChatRecord(Who.you, id)
-      q.messageHtml = query
-      q.create_time = create_time
-      session.value.unshift(q)
-    })
-
+    const q: ChatRecord = new ChatRecord(Who.you, id)
+    q.messageHtml = query
+    q.create_time = create_time
+    session.value.unshift(q)
   })
 }
 </script>

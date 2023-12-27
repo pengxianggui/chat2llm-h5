@@ -8,7 +8,9 @@ import type { AxiosPromise } from "axios";
  * @param num 
  */
 export function getRecommendQuestion(num: number): AxiosPromise<[]> {
-    return $http.post('/recommend/question', {
-        num: num
+    return $http.get('/recommend/question', {
+        params: {
+            num:num
+        }
     })
 }
