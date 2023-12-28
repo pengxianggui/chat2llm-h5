@@ -10,14 +10,14 @@
     </h4>
 
     <ChatParam v-if="sessionId" :session-id="sessionId"></ChatParam>
-    <SessionList v-else></SessionList>
+    <UserProfile v-else></UserProfile>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
 import { Back } from '@element-plus/icons-vue'
-import SessionList from "@/views/sessions/SessionList.vue";
+import UserProfile from "@/views/profile/UserProfile.vue"
 import { watch, ref } from "vue";
 import { useKnowledgeStore } from "@/stores/knowledge";
 import { useChatSessions } from '@/stores/chatSessions';

@@ -8,13 +8,12 @@
         <div v-for="(r, index) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
           <!-- <span class="avatar">{{ r.avatar }}</span> -->
           <div class="message">
-            <div class="text" v-if="r.thinking">
-              <el-icon class="is-loading"><Loading /></el-icon>
-            </div>
-            <div v-html="r.messageHtml" class="text" v-else></div>
+            <div v-html="r.messageHtml" class="text"></div>
+            <el-icon class="is-loading" v-if="r.thinking"><Loading /></el-icon>
+
             <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot && !replying">
               <span>以上内容为 AI 生成，不代表开发者立场</span>
-              <div>
+              <div class="btns">
                 <QuotationSource :docs="r.doc" v-if="!isEmpty(r.doc)"></QuotationSource>
                 <el-button :icon="Refresh" round @click="reAnswer(r)"
                   v-if="index == session.records.length - 1">重新生成</el-button>
@@ -72,12 +71,10 @@ export default {
     let session: ChatSession | any = sessionStore.get(sessionId);
     if (session.isEmpty()) {  // 如果会话为空, 则移除
       sessionStore.remove(sessionId)
-      // TODO 还得删除会话对应的chat_history
     } else {
       // 持久化会话
       saveSession(session).then(({ data: result}) => {
         if (result == false) {
-          // TODO tip
           return
         }
       })
@@ -202,7 +199,6 @@ async function answer(query?: string, r?: ChatRecord) {
     },
     onmessage: function (msgs: ChatMessage[]) {
       console.log('onmessage..')
-      record.thinking = false
       msgs.forEach(msg => {
         msg.chat_history_id = record.chat_history_id;
         if (msg.isDoc === false) {
@@ -262,7 +258,7 @@ async function loadHistory(chatId: string | null | undefined, num: number) {
     const { id, query, response, docs = [], create_time } = item
     const a: ChatRecord = new ChatRecord(Who.robot, id)
     a.doc = docs.map(doc => new ChatMessage(id, doc))
-    a.messageHtml = response
+    a.messageHtml = markdown.render(response)
     a.create_time = create_time
     session.value.unshift(a)
 
@@ -324,6 +320,13 @@ async function loadHistory(chatId: string | null | undefined, num: number) {
 
           &> :first-child {
             flex: 1;
+          }
+
+          .btns {
+            display: flex;
+            & > * {
+              margin: 0 0.2rem;
+            }
           }
         }
       }

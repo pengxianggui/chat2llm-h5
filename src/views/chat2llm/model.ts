@@ -10,7 +10,6 @@ export enum ChatMode {
 
 export class RequestParam {
   query?: string = ''; // 请求的正文
-  model_name?: string = 'zhipu-api'; // 模型名称, TODO 前端不可调整，改为PC端可配, 需要改python server
   stream: boolean = true; // 是否流式输出
   temperature: number = 0.7; // 温度
   max_tokens: number = 2000; // 最大token

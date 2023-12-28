@@ -7,8 +7,6 @@ import Chat2LLM from "@/views/chat2llm/Chat2LLM.vue";
 import { useChatSessions } from "@/stores/chatSessions.ts";
 import { useToken } from '@/stores/token.ts';
 import { useKnowledgeStore } from '@/stores/knowledge.ts'
-import { RequestParam, ChatSession } from "@/views/chat2llm/model";
-import { ChatMode } from '../views/chat2llm/model';
 import { isEmpty } from 'lodash'
 
 const router = createRouter({

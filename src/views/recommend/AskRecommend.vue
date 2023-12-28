@@ -4,7 +4,7 @@
             <svg-icon value="star" size="1.5rem"></svg-icon>
             <span>试着问我</span>
             <span class="flex"></span>
-            <el-button type="text">
+            <el-button type="text" @click="initData">
                 <svg-icon value="refresh" size="1.2rem"></svg-icon>
                 <span>换一换</span>
             </el-button>
@@ -25,6 +25,9 @@ import { ref } from 'vue';
 import router from "@/router";
 import type { RecommendQustion } from './model';
 import { getRecommendQuestion } from '@/api/recommend';
+import { isEmpty } from 'lodash';
+import { ChatMode, RequestParam, ChatSession } from '../chat2llm/model';
+import { useChatSessions } from '@/stores/chatSessions';
 
 const recommendQuestion = ref<Array<RecommendQustion>>([]);
 initData();
@@ -42,14 +45,17 @@ function initData() {
  * 携带问题前往对话界面。若knowledgeName为空，则表示采用llm模式，否则采用知识库模式
  */
 function toChat(query: String, knowledgeName?: String) {
+    const sessionStore = useChatSessions();
     // 新开一个chat session
     const sessionId = uuidv4().replaceAll('-', '');
+    const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
+    // @ts-ignore
+    const param = new RequestParam(chatMode, query, knowledgeName);
+    // @ts-ignore
+    const session = new ChatSession(sessionId, chatMode, param);
+    sessionStore.put(session);
     router.push({
-        path: `/chat/${sessionId}`,
-        query: {
-            query: query,
-            knowledgeName: knowledgeName
-        }
+        path: `/chat/${sessionId}`
     })
 }
 </script>

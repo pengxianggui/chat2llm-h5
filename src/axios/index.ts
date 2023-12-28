@@ -27,7 +27,7 @@ $http.interceptors.response.use((response: AxiosResponse) => {
     if (code == 200) {
         return response.data;
     }
-    // TODO 二进制文件处理、非授权客户端(403)、非认证用户(401)
+    // TODO 二进制文件处理
     ElMessage.error(msg);
     return Promise.reject(new Error(msg));
 }, (err: any) => {

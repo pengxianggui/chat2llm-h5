@@ -22,7 +22,6 @@ export function saveSession(session: ChatSession): AxiosPromise<Boolean> {
         mode: session.mode,
         param: {
             query: null,
-            model_name: session.param.model_name,
             stream: session.param.stream,
             temperature: session.param.temperature,
             max_tokens: session.param.max_tokens,
@@ -34,4 +33,14 @@ export function saveSession(session: ChatSession): AxiosPromise<Boolean> {
             split_result: session.param.split_result
         }
     })
+}
+
+
+/**
+ * 删除session
+ * @param sessionId
+ * @returns 
+ */
+export function deleteSession(sessionId: string): AxiosPromise<Boolean> {
+    return $http.post('/session/delete', sessionId)
 }
