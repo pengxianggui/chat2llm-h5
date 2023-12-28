@@ -2,18 +2,25 @@
   <div class="body">
     <div class="records">
       <div class="load-more" v-if="!session.isEmpty()">
-        <el-link :underline="false" type="primary" @click="loadHistory">加载更多</el-link>
-      </div>    
+        <el-link :underline="false" type="primary" @click="loadHistory(null, 5)" v-if="hasMoreHistory">加载更多</el-link>
+      </div>
       <template v-if="!session.isEmpty()">
         <div v-for="(r, index) in session.records" :key="r.chat_history_id" class="record" :class="r.who">
           <!-- <span class="avatar">{{ r.avatar }}</span> -->
           <div class="message">
-            <div v-html="r.messageHtml" class="text"></div>
-            <el-icon class="is-loading" v-if="r.thinking"><Loading /></el-icon>
-
-            <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot && !replying">
-              <span>以上内容为 AI 生成，不代表开发者立场</span>
-              <div class="btns">
+            <div class="text">
+              <div v-html="r.messageHtml"></div>
+              <div v-if="r.thinking && isEmpty(r.messageHtml)">
+                <el-icon class="is-loading"><Loading /></el-icon>
+              </div>
+            </div>
+            <div class="opr" style="padding: 0.5rem 0.2rem 0.1rem 0.2rem;" v-if="r.who == Who.robot">
+              <span v-if="r.thinking">
+                <el-icon class="is-loading" v-if="r.thinking"><Loading /></el-icon>
+                <span>响应中..</span>
+              </span>
+              <span v-else>以上内容为 AI 生成，不代表开发者立场</span>
+              <div class="btns" v-if="r.thinking == false">
                 <QuotationSource :docs="r.doc" v-if="!isEmpty(r.doc)"></QuotationSource>
                 <el-button :icon="Refresh" round @click="reAnswer(r)"
                   v-if="index == session.records.length - 1">重新生成</el-button>
@@ -25,17 +32,6 @@
       <template v-else>
         <el-alert :title="blankTip" type="warning" class="record blank-tip" show-icon :closable="false" />
       </template>
-
-      <!-- <div class="record robot" v-if="thinking">
-        <span class="avatar">🤖</span>
-        <div class="message">
-          <div class="text">
-            <el-icon class="is-loading">
-              <Loading />
-            </el-icon>
-          </div>
-        </div>
-      </div> -->
     </div>
 
     <ChatInput v-model="param.query" :replying="replying" :disabled="replying" :autofocus="true"
@@ -64,26 +60,13 @@ export default {
       session = new ChatSession(sessionId, chatMode, param);
       sessionStore.put(session);
     }
-  },
-  beforeRouteLeave(to: any, from: any) {
-    const sessionStore = useChatSessions();
-    const { params: { sessionId }} = from;
-    let session: ChatSession | any = sessionStore.get(sessionId);
-    if (session.isEmpty()) {  // 如果会话为空, 则移除
-      sessionStore.remove(sessionId)
-    } else {
-      // 持久化会话
-      saveSession(session).then(({ data: result}) => {
-        if (result == false) {
-          return
-        }
-      })
-    }
   }
 }
 </script>
+
 <script lang="ts" setup>
 import { computed, onMounted, ref, reactive, type Ref } from "vue";
+import { onBeforeRouteLeave } from 'vue-router';
 // @ts-ignore
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import { ChatMessage, ChatMode, Who, ChatSession, ChatRecord } from "./model";
@@ -111,6 +94,7 @@ const props = defineProps({
 })
 
 const replying = ref(false); // 回答中
+const hasMoreHistory = ref(true); // 是否有更多未加载的聊天记录
 
 // 从pinia中获取session
 const sessionStore = useChatSessions();
@@ -121,8 +105,7 @@ let ctrl: AbortController; // 控制sse停止
 
 // 进入时
 onMounted(async () => {
-  const chatRecord = session.value.getEarliestRecord()
-  await loadHistory(chatRecord?.chat_history_id, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
+  await loadHistory(null, 2) // 默认加载最新的2轮对话记录。可手动往前翻历史记录
   if (!isEmpty(param.query)) { // 进入时带了内容，则直接发问
     ask()
   }
@@ -181,7 +164,7 @@ async function answer(query?: string, r?: ChatRecord) {
   let record: ChatRecord;
   if (isEmpty(r)) { // 新生成的回答
     record = reactive(new ChatRecord(Who.robot, uuidv4().replaceAll('-', '')));
-    session.value.records.push(record)
+    session.value.addAnswer(record)
   } else {
     record = r
   }
@@ -201,13 +184,7 @@ async function answer(query?: string, r?: ChatRecord) {
       console.log('onmessage..')
       msgs.forEach(msg => {
         msg.chat_history_id = record.chat_history_id;
-        if (msg.isDoc === false) {
-          record.messages.push(msg);
-          const messageText = record.messages.map(msg => msg.text).join("");
-          record.messageHtml = markdown.render(messageText);
-        } else {
-          record.doc?.push(msg);
-        }
+        record.addMessage(msg)
       });
     },
     ondone: function () {
@@ -223,17 +200,17 @@ async function answer(query?: string, r?: ChatRecord) {
         } else {
           param.history_count = param.history_count + 1;
         }
-        record.setError(new Error('抱歉, 请重复一遍，我可能没听清.'));
+        record.setError(new Error('抱歉, 走神了. 请再问一次.'));
       }
     },
     onerr: function (err) {
       replying.value = false;
+      record.thinking = false
       if (err instanceof DOMException && err.name == 'AbortError') {
         // 主动终止响应..
         console.log('手动终止: ' + err.message);
         return;
       }
-      record.thinking = false
       record.setError(err)
       console.error(err);
     }
@@ -247,12 +224,20 @@ function clearQuery() {
 
 /**
  * 加载指定记录的前num轮对话记录
- * @param chatId 参考的记录id
+ * @param chatId 参考的记录id, 如果为空，则取当前session中最早的
  * @param num    基于参考的记录id的前num条记录
  */
-async function loadHistory(chatId: string | null | undefined, num: number) {
+async function loadHistory(chatId?: string | null | undefined, num?: number) {
+  if (isEmpty(chatId)) {
+    const chatRecord = session.value.getEarliestRecord()
+    chatId = chatRecord?.chat_history_id 
+  }
   const res = await loadHistories(session.value.sessionId, chatId, num)
   const data = res.data
+  if (isEmpty(data)) {
+    hasMoreHistory.value = false
+    return
+  }
   // 每个item是一轮对话，即包含一问一答
   data.forEach(item => {
     const { id, query, response, docs = [], create_time } = item
@@ -267,6 +252,35 @@ async function loadHistory(chatId: string | null | undefined, num: number) {
     q.create_time = create_time
     session.value.unshift(q)
   })
+}
+
+onBeforeRouteLeave(() => {
+  autoSave()
+})
+
+
+/**
+ * 注册页面关闭的动作
+ * @param e 
+ */
+window.addEventListener('beforeunload', (e) => {
+  autoSave()
+})
+
+/**
+ * 自动保存当前会话
+ */
+function autoSave() {
+  if (session.value.isEmpty()) {  // 如果会话为空, 则移除
+    sessionStore.remove(session.value.sessionId)
+  } else {
+    // 持久化会话
+    saveSession(session.value).then(({ data: result}) => {
+      if (result == false) {
+        return
+      }
+    })
+  }
 }
 </script>
 

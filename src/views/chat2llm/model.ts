@@ -80,6 +80,16 @@ export class ChatRecord {
     return !this.messageHtml
   }
 
+  addMessage(message: ChatMessage) {
+    if (message.isDoc === false) {
+      this.messages.push(message);
+      const messageText = this.messages.map(msg => msg.text).join("");
+      this.messageHtml = markdown.render(messageText);
+    } else {
+      this.doc?.push(message);
+    }
+  }
+
   setError(err: Error) {
     console.log(err)
     this.clear()
@@ -105,6 +115,7 @@ export class ChatSession {
     this.sessionName = sessionId; // 初始化采用sessionId作为名称
     this.mode = mode;
     this.param = param;
+    this.create_time = new Date().toDateString()
   }
 
   addQuestion(message: ChatMessage) {
@@ -112,47 +123,16 @@ export class ChatSession {
     const record = new ChatRecord(Who.you, chat_history_id);
     record.messages.push(message);
     record.messageHtml = message.text;
-    this.push(record);
-  }
-
-  addAnswer(message: ChatMessage) {
-    const { chat_history_id } = message;
-    let r: ChatRecord | undefined = this.records.findLast(r => r.chat_history_id === chat_history_id);
-    if (!r) {
-      r = new ChatRecord(Who.robot, chat_history_id);
-      this.push(r);
-    }
-
-    if (message.isDoc === false) {
-      r.messages.push(message);
-      const messageText = r.messages.map(msg => msg.text).join("");
-      r.messageHtml = markdown.render(messageText);
-    } else {
-      r.doc?.push(message);
-    }
-  }
-
-  addError(chat_history_id: string, err: Error) {
-    this.addAnswer(new ChatMessage(chat_history_id, err.message));
-
-    // // @ts-ignore
-    // const r = this.records.findLast(r => r.chat_history_id === chat_history_id);
-    // if (r) { // 存在此对话，则清空此次回复并将错误信息追加上去
-    //   r.messages.length = 0; // clear
-    //   r.messageHtml = err.message;
-    // } else { // 不存在此次对话，则
-    //   this.addAnswer(new ChatMessage(chat_history_id, err.message));
-    // }
-  }
-
-  // 加到结尾
-  push(record: ChatRecord) {
-    if (this.records.length === 0) {
+    if (this.isEmpty()) {
       // 初始化sessionName
       const { messageHtml = '对话' } = record;
-      this.sessionName = messageHtml.substring(0, 20); // 截取前7位作为sessionName
+      this.sessionName = messageHtml.substring(0, 20); // 截取首条内容作为sessionName
     }
     this.records.push(record);
+  }
+
+  addAnswer(record: ChatRecord) {
+    this.records.push(record)
   }
 
   // 加到开头
