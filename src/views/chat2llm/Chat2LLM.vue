@@ -44,8 +44,6 @@
 -->
 <script lang="ts">
 import { RequestParam } from "@/views/chat2llm/model";
-import { getRecommendQuestion } from "@/api/recommend";
-import type { RecommendQustion } from "../recommend/model";
 export default {
   beforeRouteEnter(to: any, from: any) {
     const sessionStore = useChatSessions();

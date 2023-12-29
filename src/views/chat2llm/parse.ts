@@ -67,15 +67,20 @@ function parseLine(mode: ChatMode, decodeMsg: string): Array<ChatMessage> {
   }
 
   return messages.map((msg: { text: string; answer: string; docs: Array<string>; }) => {
-    let text!: string; // 赋值断言
-    if (mode == ChatMode.Knowledge) {
-      return buildMessageForKnowledge(msg);
-      // } else if (mode == ChatMode.SearchEngine) {
+    try {
+      let text!: string; // 赋值断言
+      if (mode == ChatMode.Knowledge) {
+        return buildMessageForKnowledge(msg);
+        // } else if (mode == ChatMode.SearchEngine) {
 
-      // } else if (mode == ChatMode.Agent) {
-    } else {
-      text = msg.text;
-      return new ChatMessage(null, text)
+        // } else if (mode == ChatMode.Agent) {
+      } else {
+        text = msg.text;
+        return new ChatMessage(null, text)
+      }
+    } catch(err) {
+      console.error(err)
+      return new ChatMessage(null, '') // 某一段解析有问题，给一个空对象。后面filter会过滤掉
     }
   }).filter((msg: { text: string; answer: string; docs: Array<string>; }) => !isEmpty(msg.text))
 }

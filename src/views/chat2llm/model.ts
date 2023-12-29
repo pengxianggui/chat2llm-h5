@@ -91,14 +91,11 @@ export class ChatRecord {
   }
 
   setError(err: Error) {
-    console.log(err)
     this.clear()
     const message = new ChatMessage(this.chat_history_id, err.message)
     this.messages.push(message);
     const messageText = this.messages.map(msg => msg.text).join("");
     this.messageHtml = markdown.render(messageText);
-    console.log(this)
-    console.log(this.messageHtml)
   }
 }
 
