@@ -46,14 +46,15 @@ watch(
 const title = computed(() => {
   if (!isEmpty(sessionId.value)) {
     const sessionStore = useChatSessions();
+    // @ts-ignore
     const session = sessionStore.get(sessionId.value);
-    const knowledgeName = session?.param?.knowledge_base_name
+    const knowledgeName = session?.param?.knowledge_base_name ?? ''
     if (isEmpty(knowledgeName)) {
       return route.meta.title;
     }
     // 从pinia中获取知识库详情
     const kbStore = useKnowledgeStore();
-    const kb = kbStore.knowledges.find(kb => kb.kb_name === knowledgeName)
+    const kb = kbStore.get(knowledgeName)
     return kb?.kb_zh_name
   }
 

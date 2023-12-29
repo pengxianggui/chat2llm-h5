@@ -35,7 +35,8 @@
     </div>
 
     <ChatInput v-model="param.query" :replying="replying" :disabled="replying" :autofocus="true"
-      :placeholder="replying ? REPLAYING : INPUT_TIP" @send="ask" @abort="abort"></ChatInput>
+      :show-recommend="true" :placeholder="replying ? REPLAYING : INPUT_TIP" :param="param"
+      @send="ask" @abort="abort"></ChatInput>
   </div>
 </template>
 <!-- 由于在setup组合式API中没有onBeforeRouteEnter, 因此当前组件采用两种结合的方式。
@@ -43,6 +44,8 @@
 -->
 <script lang="ts">
 import { RequestParam } from "@/views/chat2llm/model";
+import { getRecommendQuestion } from "@/api/recommend";
+import type { RecommendQustion } from "../recommend/model";
 export default {
   beforeRouteEnter(to: any, from: any) {
     const sessionStore = useChatSessions();
@@ -78,6 +81,7 @@ import ChatInput from "@/components/chatinput/ChatInput.vue";
 import QuotationSource from "./QuotationSource.vue";
 import { INPUT_TIP, REPLAYING } from "@/constant";
 import { useChatSessions } from "@/stores/chatSessions";
+import { useKnowledgeStore } from "@/stores/knowledge";
 import { saveSession } from "@/api/session";
 import { loadHistories } from "@/api/history";
 import markdown from "./markdown";
@@ -96,6 +100,8 @@ const props = defineProps({
 const replying = ref(false); // 回答中
 const hasMoreHistory = ref(true); // 是否有更多未加载的聊天记录
 
+// 从pinia中获取知识库
+const kbStore = useKnowledgeStore();
 // 从pinia中获取session
 const sessionStore = useChatSessions();
 // @ts-ignore
@@ -112,15 +118,13 @@ onMounted(async () => {
 })
 
 const blankTip = computed(() => {
-  const mode = session.value.mode;
+  const {mode, param: { knowledge_base_name }} = session.value;
   let tip;
-  switch (mode) {
-    case ChatMode.Knowledge:
-      tip = '您当前正处于知识库模式中, 请咨询跟知识库相关的内容';
-      break;
-    default:
-      tip = '您当前正处于闲聊模式中, 回答内容不限定范围';
-      break;
+  if (mode == ChatMode.Knowledge) {
+    const kb = kbStore.get(knowledge_base_name ?? '')
+    tip = `您当前正处于知识库(${kb?.kb_zh_name})中, 知识库介绍: ${kb?.kb_info} 请咨询相关内容`;
+  } else {
+    tip = '您当前正处于非知识库模式中';
   }
   return `${tip}。请注意: AI答复不保证准确性, 请自行甄别。`
 })
@@ -130,7 +134,7 @@ const blankTip = computed(() => {
  */
 function ask() {
   const { query = '' } = param;
-  if (isEmpty(query)) {
+  if (isEmpty(query.trim())) {
     return;
   }
 

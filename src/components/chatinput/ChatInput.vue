@@ -1,9 +1,14 @@
 <template>
   <div class="input-box">
-    <el-input class="input" type="textarea" :placeholder="placeholder" ref="input" v-model="inputValue"
-      :disabled="disabled" @focus="$emit('focus')" @input="handleInput" @keyup.shift.enter="send"
-      :autosize="{ maxRows: 5 }">
-    </el-input>
+    <div class="input">
+      <el-button link @click="presetRecommend" v-if="showRecommend">
+        <svg-icon value="bulb" size="1.3rem" color="blue"></svg-icon>
+      </el-button>
+      <el-input type="textarea" :placeholder="placeholder" ref="input" v-model="inputValue"
+        :disabled="disabled" @focus="$emit('focus')" @input="handleInput" @keyup.shift.enter="send"
+        :autosize="{ maxRows: 5 }">
+      </el-input>
+    </div>
     <el-button class="send-btn" :class="{ 'disabled': disabled || !inputValue }" round type="info" @click="send"
       :disabled="disabled || !inputValue" v-if="!replying">
       <svg-icon value="send" size="1.5rem"></svg-icon>
@@ -13,26 +18,43 @@
 </template>
 
 <script setup lang="ts">
+import { getRecommendQuestion } from "@/api/recommend";
+import { RequestParam } from "@/views/chat2llm/model";
+import { isEmpty } from "lodash";
 import { onMounted, toRef, ref } from "vue";
 
 const props = defineProps({
   modelValue: String,
   replying: {
     type: Boolean,
-    require: false,
+    required: false,
     default: false
   },
   disabled: {
     type: Boolean,
-    require: false,
+    required: false,
     default: false
   },
   autofocus: {
     type: Boolean,
-    require: false,
+    required: false,
     default: false
   },
-  placeholder: String
+  placeholder: String,
+  // 显示推荐问题
+  showRecommend: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
+  // 对话配置的参数
+  param: {
+    type: RequestParam,
+    required: false,
+    default: () => {
+      return {}
+    }
+  }
 })
 
 const inputValue = toRef(props, 'modelValue');
@@ -52,6 +74,22 @@ function handleInput(val?: String) {
 function send() {
   emit('send')
 }
+
+/**
+ * 获取预设推荐问题
+ */
+ function presetRecommend() {
+  const { knowledge_base_name } = props.param;
+  getRecommendQuestion(1, knowledge_base_name ?? '')
+    .then(({data = []}) => {
+      if (isEmpty(data) || !Array.isArray(data)) {
+        return
+      }
+      //@ts-ignore
+      const { query } = data[0]
+      handleInput(query)
+  })
+}
 </script>
 
 <style scoped lang="scss">
@@ -69,8 +107,10 @@ function send() {
     font-size: 1rem;
     border-radius: 1rem;
     border: 1PX solid #c7c7c7;
-    padding: 0 1rem;
+    padding: 0 0.6rem;
     background-color: white;
+    display: flex;
+    align-items: center;
 
     // :focus-within 表示此元素或子元素被focus时, 样式生效
     // &:focus-within {
