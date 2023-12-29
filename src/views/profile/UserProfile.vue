@@ -8,7 +8,8 @@
             <template #header>
                 <h3 class="title">个人设置</h3>
             </template>
-            <SessionList></SessionList>
+            <ProfileInfo class="block"></ProfileInfo>
+            <SessionList class="block"></SessionList>
         </el-drawer>
     </div>
 </template>
@@ -16,6 +17,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import SessionList from "@/views/sessions/SessionList.vue";
+import ProfileInfo from "./ProfileInfo.vue"
 const visible = ref(false);
 </script>
   
@@ -26,6 +28,10 @@ const visible = ref(false);
 
     :deep(.el-drawer__header) {
         padding-bottom: 0.6rem;
+    }
+
+    .block {
+        margin-bottom: 1rem;
     }
 }
 </style>

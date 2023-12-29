@@ -22,6 +22,9 @@
         </el-button>
       </li>
     </ul>
+    <div v-if="bucket.length == 0">
+      <svg-icon value="empty" size="100%"></svg-icon>
+    </div>
   </div>
 </template>
 
@@ -60,7 +63,6 @@ function removeSession(sessionId: string) {
   deleteSession(sessionId).then(() => {
     store.remove(sessionId)
   })
-
 }
 </script>
 

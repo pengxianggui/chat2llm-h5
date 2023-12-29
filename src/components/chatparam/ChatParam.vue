@@ -1,7 +1,7 @@
 <template>
     <div class="param-config">
         <el-icon size="1.4rem" @click="visible = true">
-            <Setting />
+            <Operation />
         </el-icon>
 
         <el-drawer v-model="visible" direction="rtl" size="80%" class="drawer" :append-to-body="false"
@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import { Setting } from "@element-plus/icons-vue";
+import { Operation } from "@element-plus/icons-vue";
 import { ChatMode } from "@/views/chat2llm/model";
 import { useChatSessions } from "@/stores/chatSessions";
 
