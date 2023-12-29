@@ -5,7 +5,7 @@
     </el-icon>
 
     <h4 :class="{'title': true, 'home-hight': isHome}">
-      <img class="logo" src="logo.png" alt="" v-if="isHome">&nbsp;
+      <img class="logo" src="../assets/img/logo.png" alt="" v-if="isHome">&nbsp;
       <span>{{ title }}</span>
     </h4>
 
