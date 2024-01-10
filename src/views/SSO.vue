@@ -14,4 +14,3 @@ if (!isEmpty(token)) {
     tokenStore.clear()
     router.push({name: '401', query: {message: 'token无效'}})
 }
-</script>
