@@ -35,7 +35,10 @@ $http.interceptors.response.use((response: AxiosResponse) => {
     if (status == 401) {
         const tokenStore = useToken()
         tokenStore.clear()
-        router.push({name: '401', query: { message: data }})
+        // 不去401页面，而是自动单点
+        // router.push({name: '401', query: { message: data }})
+        const client = localStorage.getItem('client')
+        window.location.href = window.location.origin + `/api/sso?client=${client}`
     }
     return Promise.reject(err);
 })

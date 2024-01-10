@@ -1,7 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import HomeView from '@/views/home/HomeView.vue'
 import ErrorLayout from '@/views/err/ErrorLayout.vue'
 import Page401 from '@/views/err/Page401.vue'
+import SSO from '@/views/SSO.vue'
 import Layout from "@/views/Layout.vue";
 import Chat2LLM from "@/views/chat2llm/Chat2LLM.vue";
 import { useChatSessions } from "@/stores/chatSessions.ts";
@@ -72,27 +73,31 @@ const router = createRouter({
           props: (route) => { return {message: route.query.message }}
         }
       ]
+    },
+    {
+      path: '/sso',
+      name: 'sso',
+      component: SSO
     }
   ]
 })
 
+
 // 全局守卫
 router.beforeEach(async (to, from) => {
   const tokenStore = useToken()
-  const tokenInStorage = tokenStore.get()
-
-  const { token: tokenInPath } = to.query
-  const token = isEmpty(tokenInPath) ? tokenInStorage : tokenInPath
-
+  const token = tokenStore.get()
   if (isEmpty(token)) {
-    if (to.name != '401') {
-      return '/401'
-    } else {
-      return true;
+    if (to.name == '401' || to.name == 'sso') {
+      return true
     }
+    
+    const client = getClient(to)
+    // 重定向到后端sso接口
+    const search = (window.location.search + (isEmpty(window.location.search) ? '?' : '&'))
+    window.location.href = window.location.origin + `/api/sso${search}client=${client}`
+    return false
   }
-  // @ts-ignore
-  tokenStore.set(token) // 将token存到store
 
   // 缓存知识库
   const kbStore = useKnowledgeStore();
@@ -114,5 +119,20 @@ router.beforeEach(async (to, from) => {
 
   return true
 })
+
+/**
+ * 获取当前h5所属的client
+ * @param to 
+ */
+const getClient = function(to: RouteLocationNormalized) {
+  const { client: clientInPath } = to.query
+    const clientInStorage = localStorage.getItem('client')
+    let client = !isEmpty(clientInPath) ? clientInPath : clientInStorage
+    if (isEmpty(client)) {
+      client = '0'
+    }
+    localStorage.setItem('client', client + '')
+    return client
+}
 
 export default router
