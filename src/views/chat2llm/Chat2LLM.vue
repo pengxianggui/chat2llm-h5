@@ -374,6 +374,7 @@ function autoSave() {
         // margin-right: $avatarSide;
         border: 1px solid #eaeaea;
         background-color: #fff;
+        color: black;
         border-bottom-left-radius: 0;
 
         &>.text {
