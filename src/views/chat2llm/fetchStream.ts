@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import { ChatMessage, ChatMode, ChatRecord, RequestParam } from "./model";
 import { parse } from "./parse";
+import { ANSWER_TIMEOUT } from '@/constant';
 
 export const EventStreamContentType = 'text/event-stream';
 
@@ -31,28 +32,45 @@ export function fetchStream(mode: ChatMode, param: any, {
   async function create(): Promise<AbortController> {
     const ctrl = new AbortController();
     try {
-      // 根据param.mode不同，给不同的path路径
-      let path = '/chat/chat';
-      if (mode == ChatMode.LLM) {
-        path = '/chat/chat';
-      } else if (mode == ChatMode.Knowledge) {
-        path = '/chat/knowledge_base_chat';
-      } else if (mode == ChatMode.SearchEngine) {
-        path = '/chat/search_engine_chat';
-      } else if (mode == ChatMode.Agent) {
-        path = '/chat/agent_chat';
+      const timeoutFn = function() {
+        return new Promise<string>((resolve) => {
+          setTimeout(() => {
+            resolve('timeout')
+          }, ANSWER_TIMEOUT);
+        })
       }
 
-      const response = await fetch(`/api${path}`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify(param),
-        signal: ctrl.signal
-      })
+      const fetchFn = async function() {
+        // 根据param.mode不同，给不同的path路径
+        let path = '/chat/chat';
+        if (mode == ChatMode.LLM) {
+          path = '/chat/chat';
+        } else if (mode == ChatMode.Knowledge) {
+          path = '/chat/knowledge_base_chat';
+        } else if (mode == ChatMode.SearchEngine) {
+          path = '/chat/search_engine_chat';
+        } else if (mode == ChatMode.Agent) {
+          path = '/chat/agent_chat';
+        }
 
+        return await fetch(`/api${path}`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(param),
+          signal: ctrl.signal
+        })
+      }
+
+      // race 接受一个promise数组，先返回的作为值。 借助此特性实现timeout功能(fetch不支持)
+      const response: string | Response = await Promise.race([timeoutFn(), fetchFn()])
+      if (response === 'timeout') {
+        throw new Error('响应超时！')
+      }
+      // @ts-ignore
       onopen(response);
+      // @ts-ignore
       parse(mode, response, onmessage, ondone, onerr)
     } catch (err) {
       onerr(err)
