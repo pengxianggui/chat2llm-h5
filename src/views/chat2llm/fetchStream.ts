@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
-import { ChatMessage, ChatMode, ChatRecord, RequestParam } from "./model";
+// 如果使用ES6模块
+import { ChatMessage, ChatMode } from "./model";
 import { parse } from "./parse";
 
 export const EventStreamContentType = 'text/event-stream';
