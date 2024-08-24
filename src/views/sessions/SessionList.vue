@@ -31,12 +31,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from 'vue-router'
-import { useChatSessions } from "@/stores/chatSessions.ts";
+import { useChatSessions } from "@/stores/chatSessions";
 import { ChatMode } from "@/views/chat2llm/model";
 import { useKnowledgeStore } from "@/stores/knowledge";
 import { isEmpty } from "lodash";
 import { Delete } from "@element-plus/icons-vue";
-import { deleteSession } from "@/api/session.ts"
+import { deleteSession } from "@/api/session"
 
 const router = useRouter();
 const store = useChatSessions();

@@ -56,13 +56,12 @@ const props = defineProps({
     }
   }
 })
-
 const inputValue = toRef(props, 'modelValue');
-const emit = defineEmits(["update:modelValue", 'send']);
-const input = ref(null) // 变量名input必须和dom中ref值相同
+const emit = defineEmits(["update:modelValue", 'send', 'focus', 'abort']);
+const input = ref<HTMLInputElement | null>(null) // 变量名input必须和dom中ref值相同
 
 onMounted(() => {
-  if (props.autofocus) {
+  if (props.autofocus && input.value) {
     input.value.focus()
   }
 })

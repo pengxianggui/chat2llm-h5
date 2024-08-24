@@ -1,7 +1,7 @@
 // 如果使用ES6模块
 import { ChatMessage, ChatMode } from './model'
 import { parse } from './parse'
-import Timer from '@/views/chat2llm/timer'
+import Timer from '@/utils/timer'
 
 export const EventStreamContentType = 'text/event-stream'
 

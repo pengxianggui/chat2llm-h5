@@ -20,7 +20,6 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import { ref } from 'vue';
 import router from "@/router";
 import type { RecommendQustion } from './model';
@@ -28,6 +27,7 @@ import { getRecommendQuestion } from '@/api/recommend';
 import { isEmpty } from 'lodash';
 import { ChatMode, RequestParam, ChatSession } from '../chat2llm/model';
 import { useChatSessions } from '@/stores/chatSessions';
+import { generateUUID } from '@/utils/str-util'
 
 const recommendQuestion = ref<Array<RecommendQustion>>([]);
 initData();
@@ -47,7 +47,7 @@ function initData() {
 function toChat(query: String, knowledgeName?: String) {
     const sessionStore = useChatSessions();
     // 新开一个chat session
-    const sessionId = uuidv4().replaceAll('-', '');
+    const sessionId = generateUUID();
     const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
     // @ts-ignore
     const param = new RequestParam(chatMode, query, knowledgeName);

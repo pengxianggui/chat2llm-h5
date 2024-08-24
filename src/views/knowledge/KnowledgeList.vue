@@ -17,10 +17,10 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { v4 as uuidv4 } from 'uuid' // 如果使用ES6模块
 import router from '@/router'
 import { useKnowledgeStore } from '@/stores/knowledge'
 import { ChatMode, Knowledge } from '@/views/chat2llm/model'
+import { generateUUID } from '@/utils/str-util'
 
 const props = defineProps({
   limit: {
@@ -45,7 +45,7 @@ const knowledges = computed(() => {
 
 function toChat(kb: Knowledge) {
   // 新开一个chat session
-  const sessionId = uuidv4().replaceAll('-', '')
+  const sessionId = generateUUID();
   router.push({
     path: `/chat/${sessionId}`,
     query: {

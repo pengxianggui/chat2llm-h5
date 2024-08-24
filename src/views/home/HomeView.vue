@@ -12,21 +12,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { v4 as uuidv4 } from 'uuid' // 如果使用ES6模块
 import router from '@/router'
 import { ChatMode } from '@/views/chat2llm/model'
 import { INPUT_TIP } from '@/constant'
 import { isEmpty } from 'lodash'
 import KnowledgeList from '../knowledge/KnowledgeList.vue'
 import AskRecomment from '../recommend/AskRecommend.vue'
-import Timer from '@/views/chat2llm/timer'
-
-const timer = ref(new Timer())
+import ChatInput from '@/components/chatinput/ChatInput.vue'
+import { generateUUID } from '@/utils/str-util'
 
 function chat2llm(sessionId?: String) {
   if (isEmpty(sessionId)) {
-    sessionId = uuidv4().replaceAll('-', '');
+    sessionId = generateUUID();
   }
   router.push({
     path: `/chat/${sessionId}`,

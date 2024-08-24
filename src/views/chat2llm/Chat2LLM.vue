@@ -73,8 +73,6 @@ export default {
 <script lang="ts" setup>
 import { computed, onMounted, ref, reactive, type Ref } from "vue";
 import { onBeforeRouteLeave } from 'vue-router';
-// @ts-ignore
-import { v4 as uuidv4 } from 'uuid'; // 如果使用ES6模块
 import { ChatMessage, ChatMode, Who, ChatSession, ChatRecord } from "./model";
 import { Loading, Refresh } from "@element-plus/icons-vue";
 import { fetchStream } from "./fetchStream";
@@ -88,6 +86,7 @@ import { useKnowledgeStore } from "@/stores/knowledge";
 import { saveSession } from "@/api/session";
 import { loadHistories } from "@/api/history";
 import markdown from "./markdown";
+import { generateUUID } from '@/utils/str-util'
 
 const props = defineProps({
   sessionId: {
@@ -138,7 +137,7 @@ function ask() {
   }
 
   session.value.fillHistory(); // 历史记录带上
-  session.value.addQuestion(new ChatMessage(uuidv4().replaceAll('-', ''), query));
+  session.value.addQuestion(new ChatMessage(generateUUID(), query));
   clearQuery();
   answer(query);
 }
@@ -166,7 +165,7 @@ function abort() {
 async function answer(query?: string, r?: ChatRecord | null) {
   let record: ChatRecord;
   if (isEmpty(r)) { // 新生成的回答
-    record = reactive(new ChatRecord(Who.robot, uuidv4().replaceAll('-', '')));
+    record = reactive(new ChatRecord(Who.robot, generateUUID()));
     session.value.addAnswer(record)
   } else {
     record = r
