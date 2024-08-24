@@ -2,7 +2,6 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from "axio
 import { ElMessage } from "element-plus";
 import { useToken } from '@/stores/token';
 import { isEmpty } from "lodash";
-import router from "@/router";
 
 const $http = axios.create({
     baseURL: '/api',

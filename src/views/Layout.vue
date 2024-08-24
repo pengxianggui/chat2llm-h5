@@ -10,9 +10,8 @@
   </main>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 import Header from "@/views/Header.vue";
-import Footer from "@/views/Footer.vue";
 
 </script>
 

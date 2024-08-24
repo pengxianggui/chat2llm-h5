@@ -45,18 +45,23 @@
 <script lang="ts">
 import { RequestParam } from "@/views/chat2llm/model";
 export default {
+  /**
+   * 路由进入前，将会话存入store中
+   * @param to
+   * @param from
+   */
   beforeRouteEnter(to: any, from: any) {
     const sessionStore = useChatSessions();
-    const { params: { sessionId }, query: { knowledgeName, query = '' } } = to;
+    const { params: { sessionId } } = to;
     if (isEmpty(sessionId)) {
       return { name: 'home' }; // 回主页
     }
     // @ts-ignore
     let session: ChatSession | any = sessionStore.get(sessionId);
     if (isEmpty(session)) { // 如果会话不存在，则新建一个会话
-      const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
+      const { query: { knowledgeId, query = '', chatMode = ChatMode.LLM } } = to;
       // @ts-ignore
-      const param = new RequestParam(chatMode, query, knowledgeName);
+      const param = new RequestParam(chatMode, query, knowledgeId);
       // @ts-ignore
       session = new ChatSession(sessionId, chatMode, param);
       sessionStore.put(session);
@@ -88,10 +93,6 @@ const props = defineProps({
   sessionId: {
     type: String,
     required: true
-  },
-  query: {
-    type: String,
-    required: false
   }
 })
 
@@ -116,10 +117,10 @@ onMounted(async () => {
 })
 
 const blankTip = computed(() => {
-  const {mode, param: { knowledge_base_name }} = session.value;
+  const {mode, param: { knowledge_base_id }} = session.value;
   let tip;
   if (mode == ChatMode.Knowledge) {
-    const kb = kbStore.get(knowledge_base_name ?? '')
+    const kb = kbStore.get(knowledge_base_id ?? '')
     tip = `您当前正处于知识库(${kb?.kb_zh_name})中, 知识库介绍: ${kb?.kb_info} 请咨询相关内容`;
   } else {
     tip = '您当前正处于非知识库模式中';
@@ -162,7 +163,7 @@ function abort() {
 }
 
 // 回答：发起调用并解析。query为问题内容，record不为空则表示重新生成(record为需要重新生成的回答记录)
-async function answer(query?: string, r?: ChatRecord) {
+async function answer(query?: string, r?: ChatRecord | null) {
   let record: ChatRecord;
   if (isEmpty(r)) { // 新生成的回答
     record = reactive(new ChatRecord(Who.robot, uuidv4().replaceAll('-', '')));
@@ -173,14 +174,14 @@ async function answer(query?: string, r?: ChatRecord) {
   record.clear()
   record.thinking = true
 
-  ctrl = await fetchStream(session.value.mode, {
+  replying.value = true;
+  ctrl = fetchStream(session.value.mode, {
     session_id: session.value.sessionId,
     ...param,
     query,
-    chat_history_id: r?.chat_history_id // 这里必须取入参的r
+    chat_history_id: record?.chat_history_id // 这里必须取入参的r
   }, {
     onopen: function (/*res: Response*/) {
-      replying.value = true;
     },
     onmessage: function (msgs: ChatMessage[]) {
       console.log('onmessage..')
@@ -193,17 +194,6 @@ async function answer(query?: string, r?: ChatRecord) {
       console.log('ondone..')
       replying.value = false;
       record.thinking = false;
-      if (record.isEmpty()) { // 没有此次对话记录，说明有问题，给出错误
-        // TODO 因为当有记性时(>0)，后端会发生一个错误. issue: https://github.com/chatchat-space/Langchain-Chatchat/issues/2228
-        // 因此会导致此问题, 但是发现，如果调整下history，又恢复了。所以这里将记性默默调整下, 避免导致后面始终报这个错。这是临时不可取的方案，等这个issue解决了，再进行修改。
-        param.history_count = param.history_count ?? 5;
-        if (param.history_count > 5) {
-          param.history_count = param.history_count - 1;
-        } else {
-          param.history_count = param.history_count + 1;
-        }
-        record.setError(new Error('抱歉, 走神了. 请再问一次.'));
-      }
     },
     onerr: function (err) {
       replying.value = false;
@@ -216,7 +206,7 @@ async function answer(query?: string, r?: ChatRecord) {
       record.setError(err)
       console.error(err);
     }
-  });
+  }, 20);
 }
 
 // 清除输入项

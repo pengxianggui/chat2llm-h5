@@ -1,19 +1,20 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { getKbs } from '@/api/knowledge';
+import { Knowledge } from '@/views/chat2llm/model'
 
 export const useKnowledgeStore = defineStore('knowledges', () => {
-    const knowledges = ref([] as Array<{ kb_name: string, kb_zh_name: string, kb_info: string, create_time: string }>)
+    const knowledges = ref([] as Knowledge[])
 
-    function get(kb_name: string) {
-        if (knowledges.value.length == 0) {
-            initKbs();
+    function get(kb_id?: string) {
+        if (!kb_id) {
+            return null;
         }
-        return knowledges.value.find(kb => kb.kb_name === kb_name);
+        return knowledges.value.find(kb => kb.kb_id === kb_id)
     }
 
     function initKbs() {
-        return new Promise<Array<{ kb_name: string, kb_zh_name: string, kb_info: string, create_time: string }>>((resolve, reject) => {
+        return new Promise<Array<Knowledge>>((resolve, reject) => {
             getKbs().then(({ data }) => {
                 knowledges.value = data;
                 resolve(knowledges.value)

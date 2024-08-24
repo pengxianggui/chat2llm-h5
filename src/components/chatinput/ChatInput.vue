@@ -79,8 +79,8 @@ function send() {
  * 获取预设推荐问题
  */
  function presetRecommend() {
-  const { knowledge_base_name } = props.param;
-  getRecommendQuestion(1, knowledge_base_name ?? '')
+  const { knowledge_base_id } = props.param;
+  getRecommendQuestion(1, knowledge_base_id ?? '')
     .then(({data = []}) => {
       if (isEmpty(data) || !Array.isArray(data)) {
         return

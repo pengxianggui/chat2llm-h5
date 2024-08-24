@@ -4,12 +4,17 @@ export enum Who {
   you = 'you', robot = 'robot'
 }
 
+// 对话模式
 export enum ChatMode {
-  LLM = 'LLM', Knowledge = 'Knowledge', SearchEngine = 'SearchEngine', Agent = 'Agent'
+  LLM = 'LLM',
+  Knowledge = 'Knowledge',
+  SearchEngine = 'SearchEngine',
+  Agent = 'Agent'
 }
 
+// 流式对话的请求参数模型
 export class RequestParam {
-  query?: string = ''; // 请求的正文
+  query: string = ''; // 请求的正文
   stream: boolean = true; // 是否流式输出
   temperature: number = 0.7; // 温度
   max_tokens: number = 2000; // 最大token
@@ -18,10 +23,10 @@ export class RequestParam {
   // doubt: 很奇怪如果值是3，那么每次3次对话后都会报错, 具体错误查看issue: https://github.com/chatchat-space/Langchain-Chatchat/issues/2228
   // 但是如果设置4，或者5，甚至更多，就不容易报错。如果更小，也容易报错。
   history_count?: number = 5;
-  history?: Array<{ role: string, content: string }> = []  // 历史对话
+  history?: Array<{ role: string, content?: string }> = []  // 历史对话
 
   // 下面是知识库模式特有的---------------------
-  knowledge_base_name?: string; // 知识库名
+  knowledge_base_id?: string; // 知识库id
   top_k?: number = 3;
   score_threshold?: number = 1;
   // -----------------------------------------
@@ -30,22 +35,37 @@ export class RequestParam {
   split_result?: boolean = false;
   // -----------------------------------------
 
-  constructor(mode: ChatMode, query?: string, knowledge_base_name?: string) {
+  constructor(mode: ChatMode, query: string, knowledge_base_id?: string) {
     this.query = query;
-    this.knowledge_base_name = knowledge_base_name;
+    this.knowledge_base_id = knowledge_base_id;
     if (mode == ChatMode.Knowledge || mode == ChatMode.Agent) {
       this.temperature = 0;
     }
   }
 }
 
+// 知识库
+export class Knowledge {
+  kb_id: string;
+  kb_name: string;
+  kb_zh_name: string;
+  kb_info?: string;
+  create_time?: string;
 
+  constructor(kb_id: string, kb_name: string, kb_zh_name: string) {
+    this.kb_id = kb_id
+    this.kb_name = kb_name
+    this.kb_zh_name = kb_zh_name
+  }
+}
+
+// 对话消息
 export class ChatMessage {
-  chat_history_id: string | null;
-  text: string = '';
+  chat_history_id?: string;
+  text?: string = '';
   isDoc?: boolean = false; // 若是引用消息，则为true, 否则为false
 
-  constructor(chat_history_id: string | null, text: string, isDoc?: boolean) {
+  constructor(chat_history_id?: string, text?: string, isDoc?: boolean) {
     this.chat_history_id = chat_history_id;
     this.text = text;
     this.isDoc = isDoc ?? false
@@ -57,12 +77,12 @@ export class ChatRecord {
   avatar: string; // 头像
   messages: Array<ChatMessage> = []; // 对话记录
   doc: Array<ChatMessage> = []; // 引用， 知识库模式下，robot的记录存在出处引用
-  chat_history_id: string; // 对话id
-  messageHtml: string = ''; // 此次【对话记录】渲染的html内容
+  chat_history_id?: string; // 对话id
+  messageHtml?: string = ''; // 此次【对话记录】渲染的html内容
   create_time?: string;
   thinking?: boolean = false;
 
-  constructor(who: Who, chat_history_id: string) {
+  constructor(who: Who, chat_history_id?: string) {
     this.who = who;
     this.avatar = (who === Who.robot ? '🤖' : '🧒🏻');
     this.chat_history_id = chat_history_id;
@@ -145,7 +165,7 @@ export class ChatSession {
 
     const { history_count = 0 } = this.param;
 
-    let history: { role: string; content: string; }[] | undefined;
+    let history: { role: string; content?: string; }[] | undefined;
     if (history_count == 0) {
       history = []
     } else {

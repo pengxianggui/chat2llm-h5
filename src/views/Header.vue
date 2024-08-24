@@ -27,7 +27,6 @@ import { isEmpty } from "lodash";
 const route = useRoute();
 const router = useRouter();
 const sessionId = ref(route.params.sessionId);
-const knowledgeName = ref(route.query.knowledgeName)
 
 const isHome = computed(() => {
   return route.name === 'home'
@@ -38,7 +37,6 @@ watch(
   () => route,
   () => {
     sessionId.value = route.params.sessionId;
-    knowledgeName.value = route.query.knowledgeName
   },
   { immediate: true, deep: true }
 );
@@ -48,13 +46,13 @@ const title = computed(() => {
     const sessionStore = useChatSessions();
     // @ts-ignore
     const session = sessionStore.get(sessionId.value);
-    const knowledgeName = session?.param?.knowledge_base_name ?? ''
-    if (isEmpty(knowledgeName)) {
+    const knowledge_base_id = session?.param?.knowledge_base_id ?? ''
+    if (isEmpty(knowledge_base_id)) {
       return route.meta.title;
     }
     // 从pinia中获取知识库详情
     const kbStore = useKnowledgeStore();
-    const kb = kbStore.get(knowledgeName)
+    const kb = kbStore.get(knowledge_base_id)
     return kb?.kb_zh_name
   }
 

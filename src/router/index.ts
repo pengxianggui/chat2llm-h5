@@ -3,11 +3,11 @@ import HomeView from '@/views/home/HomeView.vue'
 import ErrorLayout from '@/views/err/ErrorLayout.vue'
 import Page401 from '@/views/err/Page401.vue'
 import SSO from '@/views/SSO.vue'
-import Layout from "@/views/Layout.vue";
+import Layout from '@/views/Layout.vue';
 import Chat2LLM from "@/views/chat2llm/Chat2LLM.vue";
-import { useChatSessions } from "@/stores/chatSessions.ts";
-import { useToken } from '@/stores/token.ts';
-import { useKnowledgeStore } from '@/stores/knowledge.ts'
+import { useChatSessions } from "@/stores/chatSessions";
+import { useToken } from '@/stores/token';
+import { useKnowledgeStore } from '@/stores/knowledge'
 import { isEmpty } from 'lodash'
 import { useUserStore } from '@/stores/user';
 
@@ -39,25 +39,6 @@ const router = createRouter({
             showBack: true,
             showSetting: true
           },
-          // 在路由钩子里初始化session，并塞到store里，保证header>setting和chat2llm里都能获取到
-          // beforeEnter: (to, /*from*/) => {
-          //   const { params: { sessionId }, query: { knowledgeName } } = to;
-          //   if (isEmpty(sessionId)) {
-          //     return { name: 'home' }; // 回主页
-          //   }
-          //   const sessionStore = useChatSessions();
-          //   // @ts-ignore
-          //   let session: ChatSession | any = sessionStore.get(sessionId);
-          //   if (isEmpty(session)) { // 新建会话
-          //     const chatMode = isEmpty(knowledgeName) ? ChatMode.LLM : ChatMode.Knowledge;
-          //     // @ts-ignore
-          //     const param = new RequestParam(chatMode, '', knowledgeName);
-          //     // @ts-ignore
-          //     session = new ChatSession(sessionId, chatMode, param);
-          //     sessionStore.put(session);
-          //   }
-          //   return true;
-          // },
         }
       ]
     },
@@ -102,7 +83,7 @@ router.beforeEach(async (to, from) => {
   // 缓存知识库
   const kbStore = useKnowledgeStore();
   if (kbStore.isEmpty()) {
-    kbStore.initKbs();
+    await kbStore.initKbs();
   }
 
   // 缓存用户

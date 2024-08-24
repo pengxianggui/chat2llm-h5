@@ -4,7 +4,6 @@ import { isEmpty } from 'lodash';
 /**
  * 解析响应事件流
  * @param mode
- * @param chatId
  * @param res
  * @param onmessage
  * @param ondone
@@ -19,8 +18,12 @@ export function parse(
 ) {
   // @ts-ignore
   try {
+    if (res.body === null || res.body === undefined) {
+      throw new Error("响应错误!");
+    }
+
     const reader = res.body.getReader();
-    const processData = (result) => {
+    const processData = (result: ReadableStreamReadResult<any>): any => {
       if (result.done) {
         ondone();
         return;
@@ -29,13 +32,11 @@ export function parse(
       const value = result.value;
       try {
         const decodeMsg = new TextDecoder('utf-8').decode(value);
-        console.debug(decodeMsg)
         const messages = parseLine(mode, decodeMsg);
         onmessage(messages)
       } catch (err) {
         onerr(err)
       }
-
       // 读取下一个片段，重复处理步骤
       return reader.read().then(processData);
     };
@@ -44,7 +45,7 @@ export function parse(
       onerr(err);
     });
   } catch (err) {
-    onerr(new Error('发生错误, 请重试:' + err.message))
+    onerr(new Error('发生错误, 请重试:' + err))
   }
 }
 
@@ -53,6 +54,7 @@ export function parse(
  * 解析每行。
  * 期望格式： {"text":""} 或 {"answer": ""}
  * 但实际发现存在一定概率出现这样的格式: {"text":""}{"text":""}， 或者{"answer": ""}{"answer": ""}
+ * @param mode
  * @param decodeMsg
  */
 function parseLine(mode: ChatMode, decodeMsg: string): Array<ChatMessage> {
@@ -66,7 +68,7 @@ function parseLine(mode: ChatMode, decodeMsg: string): Array<ChatMessage> {
     messages = JSON.parse(jsonStr)
   }
 
-  return messages.map((msg: { text: string; answer: string; docs: Array<string>; }) => {
+  return messages.map((msg: { text: string; answer: string; chat_history_id: string; docs: Array<string>; }) => {
     try {
       let text!: string; // 赋值断言
       if (mode == ChatMode.Knowledge) {
@@ -76,20 +78,20 @@ function parseLine(mode: ChatMode, decodeMsg: string): Array<ChatMessage> {
         // } else if (mode == ChatMode.Agent) {
       } else {
         text = msg.text;
-        return new ChatMessage(null, text)
+        return new ChatMessage(msg.chat_history_id, text)
       }
     } catch(err) {
       console.error(err)
-      return new ChatMessage(null, '') // 某一段解析有问题，给一个空对象。后面filter会过滤掉
+      return new ChatMessage(msg.chat_history_id, '') // 某一段解析有问题，给一个空对象。后面filter会过滤掉
     }
-  }).filter((msg: { text: string; answer: string; docs: Array<string>; }) => !isEmpty(msg.text))
+  }).filter((msg: { text: string; answer: string; chat_history_id: string, docs: Array<string>; }) => !isEmpty(msg.text))
 }
 
-function buildMessageForKnowledge(msg: { answer: string; docs: Array<string>; }) {
+function buildMessageForKnowledge(msg: { answer: string; chat_history_id: string; docs: Array<string>; }) {
   if (Object.prototype.hasOwnProperty.call(msg, 'docs')) {
-    return new ChatMessage(null, msg.docs.join('\n'), true);
+    return new ChatMessage(msg.chat_history_id, msg.docs.join('\n'), true);
   } else if (Object.prototype.hasOwnProperty.call(msg, 'answer')) {
-    return new ChatMessage(null, msg.answer);
+    return new ChatMessage(msg.chat_history_id, msg.answer);
   }
-  return new ChatMessage(null, JSON.stringify(msg));
+  return new ChatMessage(msg.chat_history_id, JSON.stringify(msg));
 }

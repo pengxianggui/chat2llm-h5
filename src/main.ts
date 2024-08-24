@@ -12,7 +12,7 @@ import SvgIcon from '@/components/svgicon/SvgIcon.vue'
 
 import App from './App.vue'
 import router from './router'
-import directiveInstaller from '@/directive/index.ts'
+import directiveInstaller from '@/directive/index'
 
 const app = createApp(App)
 

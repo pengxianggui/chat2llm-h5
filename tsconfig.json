@@ -9,6 +9,7 @@
     }
   ],
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "types": ["element-plus/global"],
     "paths": {
       "@/*": ["./src/*"]

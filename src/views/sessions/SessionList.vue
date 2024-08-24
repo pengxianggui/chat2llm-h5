@@ -10,7 +10,7 @@
           <h4>{{ s.sessionName }}</h4>
           <div class="sub">
             <el-tag v-if="s.mode == ChatMode.Knowledge" size="small">
-              {{ getKbZhName(s.sessionId, s.param.knowledge_base_name) }}
+              {{ getKbZhName(s.sessionId, s.param.knowledge_base_id) }}
             </el-tag>
             <span>{{ s.create_time }}</span>
           </div>
@@ -48,11 +48,11 @@ function toChat(sessionId: string) {
   router.push(`/chat/${sessionId}`)
 }
 
-function getKbZhName(sessionId: string, kbName: string | undefined) {
-  if (!isEmpty(kbName)) {
+function getKbZhName(sessionId: string, kbId?: string) {
+  if (!isEmpty(kbId)) {
     // 从pinia中获取知识库详情
     const kbStore = useKnowledgeStore();
-    const kb = kbStore.knowledges.find(kb => kb.kb_name === kbName)
+    const kb = kbStore.get(kbId)
     return kb?.kb_zh_name
   }
 

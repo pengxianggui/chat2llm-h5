@@ -27,7 +27,7 @@ export function saveSession(session: ChatSession): AxiosPromise<Boolean> {
             max_tokens: session.param.max_tokens,
             prompt_name: session.param.prompt_name,
             history_count: session.param.history_count,
-            knowledge_base_name: session.param.knowledge_base_name,
+            knowledge_base_id: session.param.knowledge_base_id,
             top_k: session.param.top_k,
             score_threshold: session.param.score_threshold,
             split_result: session.param.split_result

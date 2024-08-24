@@ -32,6 +32,7 @@ export default (({ mode }: { mode: string }) => {
       host: '0.0.0.0',
       port: 8080,
       open: true,
+      // https: true,
       // 部署后记得ng配置此代理
       proxy: {
         '/api': {

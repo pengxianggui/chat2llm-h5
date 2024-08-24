@@ -2,7 +2,7 @@
   <div class="home">
     <div class="body">
       <!-- 知识库版块列表 -->
-      <KnowledgeList></KnowledgeList>
+      <KnowledgeList :limit="6"></KnowledgeList>
       <AskRecomment></AskRecomment>
     </div>
 
@@ -12,13 +12,17 @@
 </template>
 
 <script setup lang="ts">
-import {v4 as uuidv4} from 'uuid'; // 如果使用ES6模块
-import router from "@/router";
-import {ChatMode} from "@/views/chat2llm/model";
-import {INPUT_TIP} from "@/constant";
-import {isEmpty} from "lodash";
-import KnowledgeList from '../knowledge/KnowledgeList.vue';
-import AskRecomment from '../recommend/AskRecommend.vue';
+import { ref } from "vue";
+import { v4 as uuidv4 } from 'uuid' // 如果使用ES6模块
+import router from '@/router'
+import { ChatMode } from '@/views/chat2llm/model'
+import { INPUT_TIP } from '@/constant'
+import { isEmpty } from 'lodash'
+import KnowledgeList from '../knowledge/KnowledgeList.vue'
+import AskRecomment from '../recommend/AskRecommend.vue'
+import Timer from '@/views/chat2llm/timer'
+
+const timer = ref(new Timer())
 
 function chat2llm(sessionId?: String) {
   if (isEmpty(sessionId)) {

@@ -17,14 +17,11 @@
                 <el-form-item prop="temperature" label="记性">
                     <el-slider v-model="chatParam.history_count" :min="0" :max="10" />
                 </el-form-item>
-                <el-form-item prop="temperature" label="温度" v-if="session.mode == ChatMode.LLM">
-                    <el-slider v-model="chatParam.temperature" :min="0" :max="1" :step="0.01" />
-                </el-form-item>
+<!--                <el-form-item prop="temperature" label="温度" v-if="session.mode == ChatMode.LLM">-->
+<!--                    <el-slider v-model="chatParam.temperature" :min="0" :max="1" :step="0.01" />-->
+<!--                </el-form-item>-->
                 <div  v-if="session.mode == ChatMode.Knowledge">
                     <el-divider content-position="left">知识库相关</el-divider>
-                    <el-form-item prop="knowledge_base_name" label="知识库名">
-                        <h4>{{ chatParam.knowledge_base_name }}</h4>
-                    </el-form-item>
                     <el-form-item prop="top_k" label="匹配条数">
                         <el-slider v-model="chatParam.top_k" :min="1" :max="10" :step="1" />
                     </el-form-item>
@@ -34,10 +31,9 @@
                 </div>
             </el-form>
             <!-- {{ chatParam }} -->
-            <el-alert title="消息提示的文案" type="info" :closable="false">
-                1. 记性: 模型能记住的最近对话记录的条数。<br>
-                2. 温度: 
-            </el-alert>
+<!--            <el-alert title="消息提示的文案" type="info" :closable="false">-->
+<!--                1. 记性: 模型能记住的最近对话记录的条数。<br>-->
+<!--            </el-alert>-->
         </el-drawer>
     </div>
 </template>
